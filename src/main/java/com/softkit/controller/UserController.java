@@ -6,6 +6,7 @@ import com.softkit.mapper.UserMapper;
 import com.softkit.service.UserService;
 import io.swagger.annotations.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -52,6 +53,39 @@ public class UserController {
             @ApiResponse(code = 500, message = "Expired or invalid JWT token")})
     public UserResponseDTO whoami(HttpServletRequest req) {
         return userMapper.mapUserToResponse(userService.whoami(req));
+    }
+
+    @PostMapping("/delete")
+    @ApiOperation(value = "${UserController.delete}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @ApiResponses(value = {
+            @ApiResponse(code = 400, message = "Something went wrong"),
+            @ApiResponse(code = 403, message = "Access denied"),
+            @ApiResponse(code = 422, message = "Invalid username")})
+    public void delete(@RequestParam String userName){
+        userService.delete(userName);
+    }
+
+    @GetMapping("/search")
+    @ApiOperation(value = "${UserController.search}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @ApiResponses(value = {
+            @ApiResponse(code = 400, message = "Something went wrong"),
+            @ApiResponse(code = 403, message = "Access denied"),
+            @ApiResponse(code = 422, message = "Invalid username")})
+    public UserResponseDTO search(@RequestParam String userName){
+        return userMapper.mapUserToResponse(userService.search(userName));
+    }
+
+    @PostMapping("/refresh")
+    @ApiOperation(value = "${UserController.refresh}")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_CLIENT')")
+    @ApiResponses(value = {
+            @ApiResponse(code = 400, message = "Something went wrong"),
+            @ApiResponse(code = 403, message = "Access denied"),
+            @ApiResponse(code = 422, message = "Invalid username")})
+    public String refresh(@RequestParam String username){
+        return userService.refresh(username);
     }
 
 }

@@ -48,19 +48,30 @@ public class UserService {
 
     //  method must delete user, by username, throw appropriate exception is user doesn't exists
     public void delete(String username) {
-//        TODO implement
+        if (userRepository.existsByUsername(username)){
+            User user = userRepository.findByUsername(username);
+            userRepository.delete(user);
+        } else {
+            throw new CustomException("User doesn't exists", HttpStatus.UNPROCESSABLE_ENTITY);
+        }
     }
 
     //  method must search user, by username, throw appropriate exception is user doesn't exists
     public User search(String username) {
-//        TODO implement
-        return null;
+        if (userRepository.existsByUsername(username)){
+            return userRepository.findByUsername(username);
+        } else {
+            throw new CustomException("User doesn't exists", HttpStatus.UNPROCESSABLE_ENTITY);
+        }
     }
 
 //  method must create a new access token, similar to login
     public String refresh(String username) {
-//        TODO implement
-        return null;        
+        if (userRepository.existsByUsername(username)) {
+            return jwtTokenProvider.createToken(username, userRepository.findByUsername(username).getRoles());
+        } else {
+            throw new CustomException("User doesn't exists", HttpStatus.UNPROCESSABLE_ENTITY);
+        }
     }
 
 }

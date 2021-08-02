@@ -38,7 +38,57 @@ public class UserServiceTests {
             assertThat(e.getMessage()).isEqualTo("Username is already in use");
             assertThat(e.getHttpStatus()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
         }
-
     }
+
+    @Test
+    public void successDeleteUserWhichIsNotYet(){
+
+        try {
+            userService.delete("test");
+        } catch (CustomException e){
+            assertThat(e.getMessage()).isEqualTo("User doesn't exists");
+            assertThat(e.getHttpStatus()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+    }
+
+    @Test
+    public void successDeleteUserWhichIsSignup(){
+        User user = new User(null, "test", "test", "test",
+                Lists.newArrayList());
+        String token = userService.signup(user);
+        assertThat(token).isNotBlank();
+
+        userService.delete(user.getUsername());
+    }
+
+    @Test
+    public void successSearchUserWhichIsNotYet(){
+        try {
+            userService.search("test");
+        } catch (CustomException e){
+            assertThat(e.getMessage()).isEqualTo("User doesn't exists");
+            assertThat(e.getHttpStatus()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+    }
+
+    @Test
+    public void successSearchUserWhichIsSignup(){
+        User user = new User(null, "test", "test", "test",
+                Lists.newArrayList());
+        String token = userService.signup(user);
+        User searchUser = userService.search(user.getUsername());
+        assertThat(searchUser.getUsername()).isEqualTo(user.getUsername());
+    }
+
+    @Test
+    public void successRefreshTokenUserWhichIsSignin(){
+        User user = new User(null, "test", "test", "test",
+                Lists.newArrayList());
+        userService.signup(user);
+        String token = userService.refresh("test");
+
+        assertThat(token).isNotBlank();
+    }
+
 
 }

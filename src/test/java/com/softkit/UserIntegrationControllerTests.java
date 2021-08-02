@@ -7,6 +7,7 @@ import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Collections;
@@ -20,6 +21,9 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
     private final String signupUrl = "/users/signup";
     private final String signinUrl = "/users/signin";
     private final String whoamiUrl = "/users/me";
+    private final String deleteUrl = "/users/delete";
+    private final String searchUrl = "/users/search";
+    private final String refreshUrl = "/users/refresh";
 
     @Test
     public void simpleSignupSuccessTest() {
@@ -141,6 +145,167 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
         assertThat(whoAmIResponse.getBody()).isNull();
     }
 
+    @Test
+    public void deleteUserWhichIsNotYet(){
+        UserDataDTO user = getValidUserForSignup();
+        String token = this.restTemplate.postForObject(
+                getBaseUrl() + signupUrl,
+                user,
+                String.class);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.put("Authorization", Collections.singletonList("Bearer " + token));
+
+
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + deleteUrl)
+                        .queryParam("userName", "fakeusername")
+                        .build().encode().toUri(),
+                HttpMethod.POST,
+                new HttpEntity<>(headers),
+                String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+
+    @Test
+    public void deleteRegisteredUser(){
+        UserDataDTO user1 = getValidUserForSignup();
+        String token1 = this.restTemplate.postForObject(
+                getBaseUrl() + signupUrl,
+                user1,
+                String.class);
+
+        UserDataDTO user2 = getValidUserForSignup();
+        String token2 = this.restTemplate.postForObject(
+                getBaseUrl() + signupUrl,
+                user2,
+                String.class);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.put("Authorization", Collections.singletonList("Bearer " + token1));
+
+
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + deleteUrl)
+                        .queryParam("userName", user2.getUsername())
+                        .build().encode().toUri(),
+                HttpMethod.POST,
+                new HttpEntity<>(headers),
+                String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    public void searchUserWhichIsNotYet(){
+        UserDataDTO user = getValidUserForSignup();
+        String token = this.restTemplate.postForObject(
+                getBaseUrl() + signupUrl,
+                user,
+                String.class);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.put("Authorization", Collections.singletonList("Bearer " + token));
+
+
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + searchUrl)
+                        .queryParam("userName", "fakeusername")
+                        .build().encode().toUri(),
+                HttpMethod.GET,
+                new HttpEntity<>(headers),
+                String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+
+    @Test
+    public void searchRegisteredUser(){
+        UserDataDTO user1 = getValidUserForSignup();
+        String token1 = this.restTemplate.postForObject(
+                getBaseUrl() + signupUrl,
+                user1,
+                String.class);
+
+        UserDataDTO user2 = getValidUserForSignup();
+        String token2 = this.restTemplate.postForObject(
+                getBaseUrl() + signupUrl,
+                user2,
+                String.class);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.put("Authorization", Collections.singletonList("Bearer " + token1));
+
+
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + searchUrl)
+                        .queryParam("userName", user2.getUsername())
+                        .build().encode().toUri(),
+                HttpMethod.GET,
+                new HttpEntity<>(headers),
+                String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    public void refreshTokenUserWhichIsSignin(){
+        UserDataDTO user = getValidUserForSignup();
+        String token1 = this.restTemplate.postForObject(
+                getBaseUrl() + signupUrl,
+                user,
+                String.class);
+
+        String token2 = this.restTemplate.postForObject(
+                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + signinUrl)
+                        .queryParam("username", user.getUsername())
+                        .queryParam("password", user.getPassword())
+                        .build().encode().toUri(),
+                HttpEntity.EMPTY,
+                String.class);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.put("Authorization", Collections.singletonList("Bearer " + token2));
+
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + refreshUrl)
+                        .queryParam("username", user.getUsername())
+                        .build().encode().toUri(),
+                HttpMethod.POST,
+                new HttpEntity<>(headers),
+                String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    public void refreshWithoutToken(){
+
+        UserDataDTO user = getValidUserForSignup();
+
+        String token1 = this.restTemplate.postForObject(
+                getBaseUrl() + signupUrl,
+                user,
+                String.class);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.put("Authorization", Collections.singletonList("Bearer " + token1));
+
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + refreshUrl)
+                        .queryParam("username", "fakename")
+                        .build().encode().toUri(),
+                HttpMethod.POST,
+                new HttpEntity<>(headers),
+                String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+
+    }
+
+
+
 
     private UserDataDTO getValidUserForSignup() {
         UUID randomUUID = UUID.randomUUID();
@@ -150,5 +315,7 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
                 randomUUID + "HeisenbuG1!",
                 Lists.newArrayList(Role.ROLE_ADMIN, Role.ROLE_CLIENT));
     }
+
+
 
 }
