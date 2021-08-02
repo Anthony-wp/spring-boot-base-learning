@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +34,11 @@ public class UserService {
     }
 
     public String signup(User user) {
-        if (!userRepository.existsByUsername(user.getUsername())) {
+        if (!userRepository.existsByUsername(user.getUsername()) && userRepository.existsByUsername(user.getUsername().toLowerCase())) {
+            if (userRepository.existsByEmail(user.getEmail().toLowerCase())){
+                throw new CustomException("Email is already in use", HttpStatus.UNPROCESSABLE_ENTITY);
+            }
+            user.setEmail(user.getEmail().toLowerCase());
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             userRepository.save(user);
             return jwtTokenProvider.createToken(user.getUsername(), user.getRoles());

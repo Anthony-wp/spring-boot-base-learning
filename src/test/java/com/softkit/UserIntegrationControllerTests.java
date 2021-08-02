@@ -60,7 +60,6 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
 
     }
 
-
     @Test
     public void noSuchUserForLogin() {
         ResponseEntity<HashMap<String, Object>> response = this.restTemplate.exchange(
@@ -76,7 +75,6 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
         assertThat(response.getBody().get("error")).isEqualTo("Unprocessable Entity");
     }
-
 
     @Test
     public void sucessSignupAndSignin() {
@@ -304,8 +302,50 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
 
     }
 
+    @Test
+    public void registrationWithSimilarEmails(){
+        UserDataDTO user1 = getValidUserForSignup();
+        user1.setEmail("BLA@gmail.com");
 
+        String token1 = this.restTemplate.postForObject(
+                getBaseUrl() + signupUrl,
+                user1,
+                String.class);
 
+        UserDataDTO user2 = getValidUserForSignup();
+        user2.setEmail("bla@gmail.com");
+
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                getBaseUrl() + signupUrl,
+                HttpMethod.POST,
+                new HttpEntity<>(user2),
+                String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+
+    }
+
+    @Test
+    public void registrationWithSimilarUsernames(){
+        UserDataDTO user1 = getValidUserForSignup();
+        user1.setUsername("Anthony");
+
+        String token1 = this.restTemplate.postForObject(
+                getBaseUrl() + signupUrl,
+                user1,
+                String.class);
+
+        UserDataDTO user2 = getValidUserForSignup();
+        user2.setUsername("anthony");
+
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                getBaseUrl() + signupUrl,
+                HttpMethod.POST,
+                new HttpEntity<>(user2),
+                String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+    }
 
     private UserDataDTO getValidUserForSignup() {
         UUID randomUUID = UUID.randomUUID();
