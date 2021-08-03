@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 import java.util.List;
+import java.util.UUID;
 
 @Entity(name = "Users")
 @Data
@@ -28,6 +29,14 @@ public class User {
     @Size(min = 8, message = "Minimum password length: 8 characters")
     private String password;
 
+    @Column(unique = true)
+    private String identifier;
+
+    @Column
+    private boolean isActivate = false;
+
     @ElementCollection(fetch = FetchType.EAGER)
     private List<Role> roles;
+
+
 }

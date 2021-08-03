@@ -1,4 +1,7 @@
 package com.softkit.service;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
@@ -6,7 +9,10 @@ import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 import java.io.File;
 import java.util.Properties;
+import java.util.UUID;
 
+@Service
+@RequiredArgsConstructor
 public class EmailService {
 
     private final String host = "smtp.gmail.com";
@@ -15,7 +21,7 @@ public class EmailService {
     private final String password = "planck662607015";
 
 
-    public void sendMail(String recipient){
+    public void sendMail(String recipient, String msg){
         Properties prop = new Properties();
         prop.put("mail.smtp.auth", true);
         prop.put("mail.smtp.starttls.enable", "true");
@@ -38,7 +44,6 @@ public class EmailService {
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipient));
             message.setSubject("Registration successful ");
 
-            String msg = "Registration successful!!!";
 
             MimeBodyPart mimeBodyPart = new MimeBodyPart();
             mimeBodyPart.setContent(msg, "text/html");

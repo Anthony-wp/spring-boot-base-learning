@@ -88,4 +88,14 @@ public class UserController {
         return userService.refresh(username);
     }
 
+    @GetMapping("/activation")
+    @ApiOperation(value = "${UserController.refresh}")
+    @ApiResponses(value = {
+            @ApiResponse(code = 400, message = "Something went wrong"),
+            @ApiResponse(code = 422, message = "Account is not activated")
+    })
+    public void activation(@RequestParam String uuid){
+        userService.activate(uuid);
+    }
+
 }

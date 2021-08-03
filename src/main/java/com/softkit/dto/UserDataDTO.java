@@ -19,6 +19,8 @@ public class UserDataDTO {
     private String email;
     @ValidPassword
     private String password;
+    private boolean isActivate;
+    private String identifier;
     private List<Role> roles;
 
 }

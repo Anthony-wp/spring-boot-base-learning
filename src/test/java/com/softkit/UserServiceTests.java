@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 
+import java.util.UUID;
+
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 
@@ -26,14 +28,14 @@ public class UserServiceTests {
 
     @Test
     public void successUserSignupTest() {
-        String signupToken1 = userService.signup(new User(null, "test", "test", "test",
+        String signupToken1 = userService.signup(new User(null, "test", "test", "test", UUID.randomUUID().toString(), false,
                 Lists.newArrayList()));
 
         assertThat(signupToken1).isNotBlank();
 
         try {
-            userService.signup(new User(null, "test", "test", "test",
-                    Lists.newArrayList()));
+            User user = new User(null, "test", "test", "test", UUID.randomUUID().toString(), false,
+                    Lists.newArrayList());
         } catch (CustomException e) {
             assertThat(e.getMessage()).isEqualTo("Username is already in use");
             assertThat(e.getHttpStatus()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
@@ -53,7 +55,7 @@ public class UserServiceTests {
 
     @Test
     public void successDeleteUserWhichIsSignup(){
-        User user = new User(null, "test", "test", "test",
+        User user = new User(null, "test", "test", "test", UUID.randomUUID().toString(), false,
                 Lists.newArrayList());
         String token = userService.signup(user);
         assertThat(token).isNotBlank();
@@ -73,7 +75,7 @@ public class UserServiceTests {
 
     @Test
     public void successSearchUserWhichIsSignup(){
-        User user = new User(null, "test", "test", "test",
+        User user = new User(null, "test", "test", "test", UUID.randomUUID().toString(), false,
                 Lists.newArrayList());
         String token = userService.signup(user);
         User searchUser = userService.search(user.getUsername());
@@ -82,7 +84,7 @@ public class UserServiceTests {
 
     @Test
     public void successRefreshTokenUserWhichIsSignin(){
-        User user = new User(null, "test", "test", "test",
+        User user = new User(null, "test", "test", "test", UUID.randomUUID().toString(), false,
                 Lists.newArrayList());
         userService.signup(user);
         String token = userService.refresh("test");

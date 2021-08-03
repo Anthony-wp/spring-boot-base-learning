@@ -15,7 +15,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "\n{\n    \"username\": \"softkit\", \n    \"email\": \"aslkdj@softkit.company\",\n    \"password\": \"HeisenbuG1!\",\n    \"roles\": [\n        \"ROLE_CLIENT\"\n    ] \n\n}",
+					"raw": "\n{\n    \"username\": \"softkit\", \n    \"email\": \"anthone.vallpon@softkit.company\",\n    \"password\": \"HeisenbuG1!\",\n    \"roles\": [\n        \"ROLE_CLIENT\"\n    ] \n\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -69,7 +69,7 @@
 					"query": [
 						{
 							"key": "username",
-							"value": "youremail@softkit.company"
+							"value": "softkit"
 						},
 						{
 							"key": "password",
