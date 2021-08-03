@@ -13,7 +13,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Locale;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -34,13 +35,21 @@ public class UserService {
     }
 
     public String signup(User user) {
-        if (!userRepository.existsByUsername(user.getUsername()) && userRepository.existsByUsername(user.getUsername().toLowerCase())) {
+        if (!userRepository.existsByUsername(user.getUsername().toLowerCase())) {
             if (userRepository.existsByEmail(user.getEmail().toLowerCase())){
                 throw new CustomException("Email is already in use", HttpStatus.UNPROCESSABLE_ENTITY);
             }
+            List<User> users = userRepository.findAll();
+            for (User us : users){
+                if (us.getUsername().toLowerCase().equals(user.getUsername().toLowerCase())){
+                    throw new CustomException("Username is already in use", HttpStatus.UNPROCESSABLE_ENTITY);
+                }
+            }
             user.setEmail(user.getEmail().toLowerCase());
+//            user.setUsername(user.getUsername().toLowerCase());
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             userRepository.save(user);
+
             return jwtTokenProvider.createToken(user.getUsername(), user.getRoles());
         } else {
             throw new CustomException("Username is already in use", HttpStatus.UNPROCESSABLE_ENTITY);

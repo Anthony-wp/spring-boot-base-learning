@@ -2,12 +2,13 @@ package com.softkit;
 
 import com.softkit.dto.UserDataDTO;
 import com.softkit.dto.UserResponseDTO;
+import com.softkit.service.EmailService;
 import com.softkit.model.Role;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Collections;
@@ -17,6 +18,9 @@ import java.util.UUID;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class UserIntegrationControllerTests extends AbstractControllerTest {
+
+    @Mock
+    private EmailService emailService;
 
     private final String signupUrl = "/users/signup";
     private final String signinUrl = "/users/signin";
@@ -328,7 +332,7 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
     @Test
     public void registrationWithSimilarUsernames(){
         UserDataDTO user1 = getValidUserForSignup();
-        user1.setUsername("Anthony");
+        user1.setUsername("AnThOnY");
 
         String token1 = this.restTemplate.postForObject(
                 getBaseUrl() + signupUrl,
@@ -344,7 +348,31 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
                 new HttpEntity<>(user2),
                 String.class);
 
+
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+
+    @Test
+    public void sendingEmailAfterRegistration(){
+        UUID randomUUID = UUID.randomUUID();
+        UserDataDTO user = new UserDataDTO(
+                randomUUID + "softkit",
+                "anthone.vallpon@softkit.company",
+                randomUUID + "HeisenbuG!",
+                Lists.newArrayList(Role.ROLE_ADMIN, Role.ROLE_CLIENT)
+        );
+
+        System.out.println(user.getEmail());
+
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                getBaseUrl() + signupUrl,
+                HttpMethod.POST,
+                new HttpEntity<>(user),
+                String.class);
+
+        emailService.sendMail(user.getEmail());
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     private UserDataDTO getValidUserForSignup() {
@@ -355,7 +383,5 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
                 randomUUID + "HeisenbuG1!",
                 Lists.newArrayList(Role.ROLE_ADMIN, Role.ROLE_CLIENT));
     }
-
-
 
 }
