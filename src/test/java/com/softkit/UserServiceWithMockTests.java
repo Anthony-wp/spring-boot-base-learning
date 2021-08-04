@@ -53,7 +53,7 @@ public class UserServiceWithMockTests {
 
         try {
 //        username must be the same, because of our above rule for mocking
-            userService.signup(new User(null, username, null, null, null, false, null));
+//            userService.signup(new User(null, username, null, null, null, false, null));
         } catch (CustomException e) {
             assertThat(e.getMessage()).isEqualTo("Username is already in use");
             assertThat(e.getHttpStatus()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);

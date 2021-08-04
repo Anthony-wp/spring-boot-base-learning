@@ -39,3 +39,7 @@ UserController:
   delete: Deletes specific user by username
   search: Returns specific user by username
   me: Returns current user's data
+
+images:
+  path:
+    string: /home/softkit/IdeaProjects/spring-boot-base-learning/src/main/resources/tmp/images

@@ -30,10 +30,13 @@ public class User {
     private String password;
 
     @Column(unique = true)
-    private String identifier;
+    private String activationKey;
 
     @Column
     private boolean isActivate = false;
+
+    @Column
+    private String userAvatar;
 
     @ElementCollection(fetch = FetchType.EAGER)
     private List<Role> roles;

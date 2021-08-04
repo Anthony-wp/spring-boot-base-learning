@@ -15,6 +15,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class EmailService {
 
+//    todo move to properties
     private final String host = "smtp.gmail.com";
     private final int port = 587;
     private final String username = "anthony.vallpon@gmail.com";
@@ -22,6 +23,7 @@ public class EmailService {
 
 
     public void sendMail(String recipient, String msg){
+//    todo move to properties
         Properties prop = new Properties();
         prop.put("mail.smtp.auth", true);
         prop.put("mail.smtp.starttls.enable", "true");
@@ -39,7 +41,9 @@ public class EmailService {
 
         try {
 
+
             Message message = new MimeMessage(session);
+            //    todo move to properties
             message.setFrom(new InternetAddress("anthony.vallpon@gmail.com"));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipient));
             message.setSubject("Registration successful ");

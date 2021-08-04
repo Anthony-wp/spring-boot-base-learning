@@ -20,7 +20,8 @@ public class UserDataDTO {
     @ValidPassword
     private String password;
     private boolean isActivate;
-    private String identifier;
+    private String activationKey;
+    private String userAvatar;
     private List<Role> roles;
 
 }

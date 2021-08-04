@@ -6,19 +6,25 @@ import com.softkit.mapper.UserMapper;
 import com.softkit.service.UserService;
 import io.swagger.annotations.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.IOException;
 
 @CrossOrigin
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/users")
 @Api(tags = "users")
+@Slf4j
 public class UserController {
+
 
     private final UserService userService;
     private final UserMapper userMapper;
@@ -55,6 +61,7 @@ public class UserController {
         return userMapper.mapUserToResponse(userService.whoami(req));
     }
 
+
     @PostMapping("/delete")
     @ApiOperation(value = "${UserController.delete}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
@@ -62,8 +69,9 @@ public class UserController {
             @ApiResponse(code = 400, message = "Something went wrong"),
             @ApiResponse(code = 403, message = "Access denied"),
             @ApiResponse(code = 422, message = "Invalid username")})
-    public void delete(@RequestParam String userName){
+    public String delete(@RequestParam String userName){
         userService.delete(userName);
+        return "Delete is successful";
     }
 
     @GetMapping("/search")
@@ -94,8 +102,41 @@ public class UserController {
             @ApiResponse(code = 400, message = "Something went wrong"),
             @ApiResponse(code = 422, message = "Account is not activated")
     })
-    public void activation(@RequestParam String uuid){
+    public String activation(@RequestParam String uuid){
         userService.activate(uuid);
+        return "Activation is successful";
+    }
+
+    @PostMapping(value = "/images",
+            consumes = {MediaType.MULTIPART_FORM_DATA_VALUE},
+            produces = {MediaType.APPLICATION_JSON_VALUE} )
+    @ApiOperation(value = "${UserController.uploadUserAvatar}")
+    @ApiResponses(value = {
+            @ApiResponse(code = 400, message = "Something went wrong"),
+            @ApiResponse(code = 403, message = "Access denied"),
+            @ApiResponse(code = 422, message = "Invalid username")})
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_CLIENT')")
+    public String uploadUserAvatar(
+            @RequestParam String username,
+            @RequestBody MultipartFile file) throws IOException {
+        userService.uploadImage(username, file);
+        return "Images is successful uploaded";
+    }
+
+    @GetMapping("/images")
+    @ApiOperation(value = "${UserController.uploadUserAvatar}")
+    @ApiResponses(value = {
+        @ApiResponse(code = 400, message = "Something went wrong"),
+        @ApiResponse(code = 403, message = "Access denied"),
+        @ApiResponse(code = 422, message = "Invalid username")})
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_CLIENT')")
+    public String loadUserAvatar(HttpServletResponse res, @RequestParam String username){
+        try {
+            res.sendRedirect(userService.loadImages(username));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return userService.loadImages(username);
     }
 
 }

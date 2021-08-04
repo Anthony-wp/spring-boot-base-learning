@@ -6,11 +6,17 @@ import com.softkit.service.EmailService;
 import com.softkit.model.Role;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.FileSystemResourceLoader;
 import org.springframework.http.*;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.UUID;
@@ -19,7 +25,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class UserIntegrationControllerTests extends AbstractControllerTest {
 
-    @Mock
+    @MockBean
     private EmailService emailService;
 
     private final String signupUrl = "/users/signup";
@@ -28,6 +34,8 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
     private final String deleteUrl = "/users/delete";
     private final String searchUrl = "/users/search";
     private final String refreshUrl = "/users/refresh";
+    private final String activationUrl = "/users/activation?uuid=";
+    private final String uploadAvatarUrl = "/users/images";
 
     @Test
     public void simpleSignupSuccessTest() {
@@ -91,7 +99,6 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
 
 //        checking that signup token is ok
         assertThat(signupToken).isNotBlank();
-
 
         String token = this.restTemplate.postForObject(
                 UriComponentsBuilder.fromHttpUrl(getBaseUrl() + signinUrl)
@@ -296,8 +303,10 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
         HttpHeaders headers = new HttpHeaders();
         headers.put("Authorization", Collections.singletonList("Bearer " + token1));
 
+        String httpUrl = getBaseUrl() + refreshUrl;
+
         ResponseEntity<String> response = this.restTemplate.exchange(
-                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + refreshUrl)
+                UriComponentsBuilder.fromHttpUrl(httpUrl)
                         .queryParam("username", "fakename")
                         .build().encode().toUri(),
                 HttpMethod.POST,
@@ -363,6 +372,7 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
                 randomUUID + "HeisenbuG!",
                 true,
                 randomUUID.toString(),
+                null,
                 Lists.newArrayList(Role.ROLE_ADMIN, Role.ROLE_CLIENT)
         );
 
@@ -384,7 +394,7 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
                 randomUUID + "softkit",
                 randomUUID + "youremail@softkitit.com",
                 randomUUID + "HeisenbuG1!",
-                false, randomUUID.toString(),
+                false, randomUUID.toString(), null,
                 Lists.newArrayList(Role.ROLE_ADMIN, Role.ROLE_CLIENT)
         );
 
@@ -408,8 +418,41 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
 
     }
 
+    @Test
+    public void successUploadAndLoadUserAvatar(){
+        UserDataDTO user = getValidUserForSignup();
 
+        String token = this.restTemplate.postForObject(
+                getBaseUrl() + signupUrl,
+                user,
+                String.class);
 
+        assertThat(token).isNotBlank();
+
+        String token1 = this.restTemplate.postForObject(
+                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + signinUrl)
+                        .queryParam("username", user.getUsername())
+                        .queryParam("password", user.getPassword())
+                        .build().encode().toUri(),
+                HttpEntity.EMPTY,
+                String.class);
+
+        assertThat(token1).isNotBlank();
+
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.put("Authorization", Collections.singletonList("Bearer " + token1));
+//
+//        ResponseEntity<String> uploadResponse = this.restTemplate.exchange(
+//                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + uploadAvatarUrl)
+//                        .queryParam("username", user.getUsername())
+//                        .build().encode().toUri(),
+//                HttpMethod.POST,
+//                new HttpEntity<>(new File("/home/softkit/IdeaProjects/images/photo.arrr.jpg").getAbsolutePath(), headers),
+//                String.class);
+//
+//        assertThat(uploadResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+    }
 
     private UserDataDTO getValidUserForSignup() {
         UUID randomUUID = UUID.randomUUID();
@@ -417,7 +460,7 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
                 randomUUID + "softkit",
                 randomUUID + "youremail@softkitit.com",
                 randomUUID + "HeisenbuG1!",
-                true, randomUUID.toString(),
+                true, randomUUID.toString(), null,
                 Lists.newArrayList(Role.ROLE_ADMIN, Role.ROLE_CLIENT)
                 );
     }

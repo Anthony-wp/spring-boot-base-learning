@@ -28,13 +28,13 @@ public class UserServiceTests {
 
     @Test
     public void successUserSignupTest() {
-        String signupToken1 = userService.signup(new User(null, "test", "test", "test", UUID.randomUUID().toString(), false,
+        String signupToken1 = userService.signup(new User(null, "test", "test", "test", UUID.randomUUID().toString(), false, null,
                 Lists.newArrayList()));
 
         assertThat(signupToken1).isNotBlank();
 
         try {
-            User user = new User(null, "test", "test", "test", UUID.randomUUID().toString(), false,
+            User user = new User(null, "test", "test", "test", UUID.randomUUID().toString(), true, null,
                     Lists.newArrayList());
         } catch (CustomException e) {
             assertThat(e.getMessage()).isEqualTo("Username is already in use");
@@ -55,7 +55,7 @@ public class UserServiceTests {
 
     @Test
     public void successDeleteUserWhichIsSignup(){
-        User user = new User(null, "test", "test", "test", UUID.randomUUID().toString(), false,
+        User user = new User(null, "test", "test", "test", UUID.randomUUID().toString(), false, null,
                 Lists.newArrayList());
         String token = userService.signup(user);
         assertThat(token).isNotBlank();
@@ -64,7 +64,7 @@ public class UserServiceTests {
     }
 
     @Test
-    public void successSearchUserWhichIsNotYet(){
+    public void successSearchUserWhichIsNotYetFound(){
         try {
             userService.search("test");
         } catch (CustomException e){
@@ -75,7 +75,7 @@ public class UserServiceTests {
 
     @Test
     public void successSearchUserWhichIsSignup(){
-        User user = new User(null, "test", "test", "test", UUID.randomUUID().toString(), false,
+        User user = new User(null, "test", "test", "test", UUID.randomUUID().toString(), false, null,
                 Lists.newArrayList());
         String token = userService.signup(user);
         User searchUser = userService.search(user.getUsername());
@@ -84,7 +84,7 @@ public class UserServiceTests {
 
     @Test
     public void successRefreshTokenUserWhichIsSignin(){
-        User user = new User(null, "test", "test", "test", UUID.randomUUID().toString(), false,
+        User user = new User(null, "test", "test", "test", UUID.randomUUID().toString(), true, null,
                 Lists.newArrayList());
         userService.signup(user);
         String token = userService.refresh("test");
