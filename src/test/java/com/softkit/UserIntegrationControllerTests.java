@@ -8,18 +8,10 @@ import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.FileSystemResourceLoader;
 import org.springframework.http.*;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.File;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.UUID;
+import java.util.*;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -111,7 +103,6 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
 //        checking that signin token is ok
         assertThat(token).isNotBlank();
 
-
 //        set auth headers based on login response
         HttpHeaders headers = new HttpHeaders();
         headers.put("Authorization", Collections.singletonList("Bearer " + token));
@@ -127,13 +118,11 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
 //        check status code
         assertThat(whoAmIResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         UserResponseDTO userDetails = whoAmIResponse.getBody();
-
 //        check that all fields match and id has been set properly
         assertThat(userDetails.getUsername()).isEqualTo(user.getUsername());
         assertThat(userDetails.getEmail()).isEqualTo(user.getEmail());
         assertThat(userDetails.getRoles()).isEqualTo(user.getRoles());
         assertThat(userDetails.getId()).isNotNull();
-
     }
 
     @Test
@@ -143,7 +132,7 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
         HttpHeaders headers = new HttpHeaders();
         headers.put("Authorization", Collections.singletonList("Bearer " + "Secure (no) token"));
 
-//        call /me endpoint to check that user is really authorized  
+//        call /me endpoint to check that user is really authorized
         ResponseEntity<UserResponseDTO> whoAmIResponse = this.restTemplate.exchange(
                 UriComponentsBuilder.fromHttpUrl(getBaseUrl() + whoamiUrl)
                         .build().encode().toUri(),
@@ -151,13 +140,13 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
                 new HttpEntity<>(headers),
                 UserResponseDTO.class);
 
-//        check status code 
+//        check status code
         assertThat(whoAmIResponse.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(whoAmIResponse.getBody()).isNull();
     }
 
     @Test
-    public void deleteUserWhichIsNotYet(){
+    public void deleteUserWhichIsNotExists(){
         UserDataDTO user = getValidUserForSignup();
         String token = this.restTemplate.postForObject(
                 getBaseUrl() + signupUrl,
@@ -176,7 +165,7 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
                 new HttpEntity<>(headers),
                 String.class);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
 
     }
 
@@ -196,7 +185,6 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
 
         HttpHeaders headers = new HttpHeaders();
         headers.put("Authorization", Collections.singletonList("Bearer " + token1));
-
 
         ResponseEntity<String> response = this.restTemplate.exchange(
                 UriComponentsBuilder.fromHttpUrl(getBaseUrl() + deleteUrl)
@@ -229,7 +217,7 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
                 new HttpEntity<>(headers),
                 String.class);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -290,32 +278,32 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
-
-    @Test
-    public void refreshWithoutToken(){
-        UserDataDTO user = getValidUserForSignup();
-
-        String token1 = this.restTemplate.postForObject(
-                getBaseUrl() + signupUrl,
-                user,
-                String.class);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.put("Authorization", Collections.singletonList("Bearer " + token1));
-
-        String httpUrl = getBaseUrl() + refreshUrl;
-
-        ResponseEntity<String> response = this.restTemplate.exchange(
-                UriComponentsBuilder.fromHttpUrl(httpUrl)
-                        .queryParam("username", "fakename")
-                        .build().encode().toUri(),
-                HttpMethod.POST,
-                new HttpEntity<>(headers),
-                String.class);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
-
-    }
+//
+//    @Test
+//    public void refreshWithoutToken(){
+//        UserDataDTO user = getValidUserForSignup();
+//
+//        String token1 = this.restTemplate.postForObject(
+//                getBaseUrl() + signupUrl,
+//                user,
+//                String.class);
+//
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.put("Authorization", Collections.singletonList("Bearer " + token1));
+//
+//        String httpUrl = getBaseUrl() + refreshUrl;
+//
+//        ResponseEntity<String> response = this.restTemplate.exchange(
+//                UriComponentsBuilder.fromHttpUrl(httpUrl)
+//                        .queryParam("username", "fakename")
+//                        .build().encode().toUri(),
+//                HttpMethod.POST,
+//                new HttpEntity<>(headers),
+//                String.class);
+//
+//        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+//
+//    }
 
     @Test
     public void registrationWithSimilarEmails(){
@@ -358,8 +346,6 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
                 HttpMethod.POST,
                 new HttpEntity<>(user2),
                 String.class);
-
-
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
@@ -368,10 +354,12 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
         UUID randomUUID = UUID.randomUUID();
         UserDataDTO user = new UserDataDTO(
                 randomUUID + "softkit",
-                "anthone.vallpon@softkit.company",
-                randomUUID + "HeisenbuG!",
+                "Anthony",
+                "Vallpon",
+                new GregorianCalendar(2001, Calendar.JANUARY, 17),
+                randomUUID + "youremail@softkitit.com",
+                randomUUID + "HeisenbuG1!",
                 true,
-                randomUUID.toString(),
                 null,
                 Lists.newArrayList(Role.ROLE_ADMIN, Role.ROLE_CLIENT)
         );
@@ -392,9 +380,13 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
         UUID randomUUID = UUID.randomUUID();
         UserDataDTO user = new UserDataDTO(
                 randomUUID + "softkit",
+                "Anthony",
+                "Vallpon",
+                new GregorianCalendar(2001, Calendar.JANUARY, 17),
                 randomUUID + "youremail@softkitit.com",
                 randomUUID + "HeisenbuG1!",
-                false, randomUUID.toString(), null,
+                false,
+                null,
                 Lists.newArrayList(Role.ROLE_ADMIN, Role.ROLE_CLIENT)
         );
 
@@ -413,8 +405,8 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
                 new ParameterizedTypeReference<HashMap<String, Object>>() {
                 });
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
-        assertThat(response.getStatusCodeValue()).isEqualTo(422);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_ACCEPTABLE);
+        assertThat(response.getStatusCodeValue()).isEqualTo(406);
 
     }
 
@@ -458,11 +450,16 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
         UUID randomUUID = UUID.randomUUID();
         return new UserDataDTO(
                 randomUUID + "softkit",
+                "Anthony",
+                "Vallpon",
+                new GregorianCalendar(2001, Calendar.JANUARY, 17),
                 randomUUID + "youremail@softkitit.com",
                 randomUUID + "HeisenbuG1!",
-                true, randomUUID.toString(), null,
+                true,
+                null,
                 Lists.newArrayList(Role.ROLE_ADMIN, Role.ROLE_CLIENT)
-                );
+        );
+
     }
 
 }

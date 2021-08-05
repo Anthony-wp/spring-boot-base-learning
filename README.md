@@ -188,7 +188,7 @@ The output is three Base64 strings separated by dots that can be easily passed i
 The following shows a JWT that has the previous header and payload encoded, and it is signed with a secret. Encoded JWT
 
 ![](https://camo.githubusercontent.com/a56953523c443d6a97204adc5e39b4b8c195b453/68747470733a2f2f63646e2e61757468302e636f6d2f636f6e74656e742f6a77742f656e636f6465642d6a7774332e706e67)
-
+``
 ## How do JSON Web Tokens work?
 
 In authentication, when the user successfully logs in using their credentials, a JSON Web Token will be returned and must be saved locally (typically in local storage, but cookies can be also used), instead of the traditional approach of creating a session in the server and returning a cookie.
@@ -206,7 +206,7 @@ The following diagram shows this process:
 
 ![](https://camo.githubusercontent.com/5871e9f0234542cd89bab9b9c100b20c9eb5b789/68747470733a2f2f63646e2e61757468302e636f6d2f636f6e74656e742f6a77742f6a77742d6469616772616d2e706e67) 
 
-# JWT Authentication Summary
+# JWT Authen``tication Summary
 
 Token based authentication schema's became immensely popular in recent times, as they provide important benefits when compared to sessions/cookies:
 

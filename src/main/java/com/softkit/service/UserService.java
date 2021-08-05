@@ -12,11 +12,14 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
+import java.time.ZonedDateTime;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service
@@ -36,7 +39,7 @@ public class UserService {
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
             if (!userRepository.findByUsername(username).isActivate()){
-                throw new CustomException("Account is not activated", HttpStatus.UNPROCESSABLE_ENTITY);
+                throw new CustomException("Account is not activated", HttpStatus.NOT_ACCEPTABLE);
             }
             return jwtTokenProvider.createToken(username, userRepository.findByUsername(username).getRoles());
         } catch (AuthenticationException e) {
@@ -49,12 +52,13 @@ public class UserService {
             if (userRepository.existsByEmailIgnoreCase(user.getEmail())){
                 throw new CustomException("Email is already in use", HttpStatus.UNPROCESSABLE_ENTITY);
             }
-            UUID uuid = UUID.randomUUID();
-            user.setActivationKey(uuid.toString());
+            String uuid = UUID.randomUUID().toString();
+            user.setActivationKey(uuid);
+            user.setRegistrationDate(ZonedDateTime.now());
             String url = String.format("%s/users/activation?uuid=%s", baseUrl, uuid);
-            emailService.sendMail(user.getEmail(), url);
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             userRepository.save(user);
+            emailService.sendMail(user.getEmail(), url);
             return jwtTokenProvider.createToken(user.getUsername(), user.getRoles());
         } else {
             throw new CustomException("Username is already in use", HttpStatus.UNPROCESSABLE_ENTITY);
@@ -66,28 +70,30 @@ public class UserService {
     }
 
     //  method must delete user, by username, throw appropriate exception is user doesn't exists
+    @Transactional
     public void delete(String username) {
-        try{
-            userRepository.deleteByUsername(username);
-        } catch (Exception e){
-            throw new CustomException("User doesn't exists", HttpStatus.UNPROCESSABLE_ENTITY);
+        if (userRepository.deleteByUsername(username) == 0){
+            throw new CustomException("User doesn't exists", HttpStatus.NOT_FOUND);
         }
     }
 
     //  method must search user, by username, throw appropriate exception is user doesn't exists
+    @Transactional
     public User search(String username) {
-        try{
-            return userRepository.findByUsername(username);
-        } catch (Exception e){
+        User user = userRepository.findByUsername(username);
+        if (user != null){
+            return user;
+        } else {
             throw new CustomException("User doesn't exists", HttpStatus.NOT_FOUND);
         }
     }
 
 //  method must create a new access token, similar to login
+    @Transactional
     public String refresh(String username) {
         try{
             return jwtTokenProvider.createToken(username, userRepository.findByUsername(username).getRoles());
-        } catch (Exception e){
+        } catch (NoSuchElementException e){
             throw new CustomException("User doesn't exists", HttpStatus.UNPROCESSABLE_ENTITY);
         }
     }

@@ -43,3 +43,10 @@ UserController:
 images:
   path:
     string: /home/softkit/IdeaProjects/spring-boot-base-learning/src/main/resources/tmp/images
+
+email:
+  service:
+    host: smtp.gmail.com
+    port: 587
+    username: anthony.vallpon@gmail.com
+    password: planck662607015

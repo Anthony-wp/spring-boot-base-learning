@@ -2,9 +2,6 @@ package com.softkit.repository;
 
 import com.softkit.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-
-import java.util.UUID;
 
 public interface UserRepository extends JpaRepository<User, Integer> {
 
@@ -12,7 +9,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     User findByUsername(String username);
 
-    void deleteByUsername(String username);
+    int deleteByUsername(String username);
 
     boolean existsByUsernameIgnoreCase(String username);
 
