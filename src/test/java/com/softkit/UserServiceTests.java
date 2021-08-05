@@ -103,5 +103,19 @@ public class UserServiceTests {
         assertThat(token).isNotBlank();
     }
 
+//    @Test
+//    public void successUpdateUserData(){
+//        User user = new User(null, "test", "test", "test",
+//                new GregorianCalendar(2001, Calendar.JANUARY, 17) , "test", "test", UUID.randomUUID().toString(), true, null, ZonedDateTime.now(),
+//                Lists.newArrayList());
+//        System.out.println(userService.signup(user));
+//        String token = userService.signin("test", "test");
+//        User newUser = userService.updateUserData(token, "newFirstName", "newLastName");
+//
+//        assertThat(newUser.getFirstName()).isEqualTo("newFirstName");
+//        assertThat(newUser.getLastName()).isEqualTo("newLastName");
+//    }
+
+
 
 }

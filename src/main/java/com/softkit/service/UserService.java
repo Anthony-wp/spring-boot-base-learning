@@ -98,6 +98,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public void activate(String uuid){
         if (userRepository.existsByActivationKeyAndIsActivateFalse(uuid)) {
             User user = userRepository.findByActivationKey(uuid);
@@ -108,12 +109,13 @@ public class UserService {
         }
     }
 
-    public void uploadImage(String username, MultipartFile file) throws IOException {
+    @Transactional
+    public void uploadImage(HttpServletRequest req, MultipartFile file) throws IOException {
         File uploadDir = new File(filePathToSaveUserImages);
         if (!new File(filePathToSaveUserImages).exists()){
             uploadDir.mkdir();
         }
-        User user = userRepository.findByUsername(username);
+        User user = userRepository.findByUsername(jwtTokenProvider.getUsername(jwtTokenProvider.resolveToken(req)));
         String[] arr = file.getOriginalFilename().split("\\.(?=[^\\.]+$)");
         String fileName = String.format("%s_%d.%s", arr[0], user.getId(), arr[1]);
         File dest = new File(filePathToSaveUserImages + "/" + fileName);
@@ -122,7 +124,17 @@ public class UserService {
         userRepository.save(user);
     }
 
+    @Transactional
     public String loadImages(String username){
         return userRepository.findByUsername(username).getUserAvatar();
+    }
+
+    @Transactional
+    public User updateUserData(HttpServletRequest req, String firstname, String lastname){
+        User user = userRepository.findByUsername(jwtTokenProvider.getUsername(jwtTokenProvider.resolveToken(req)));
+        user.setFirstName(firstname);
+        user.setLastName(lastname);
+        userRepository.save(user);
+        return user;
     }
 }

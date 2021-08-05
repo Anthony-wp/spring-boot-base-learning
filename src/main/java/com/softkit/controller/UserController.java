@@ -117,14 +117,14 @@ public class UserController {
             @ApiResponse(code = 422, message = "Invalid username")})
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_CLIENT')")
     public String uploadUserAvatar(
-            @RequestParam String username,
+            HttpServletRequest req,
             @RequestBody MultipartFile file) throws IOException {
-        userService.uploadImage(username, file);
+        userService.uploadImage(req, file);
         return "Images is successful uploaded";
     }
 
     @GetMapping("/images")
-    @ApiOperation(value = "${UserController.uploadUserAvatar}")
+    @ApiOperation(value = "${UserController.loadUserAvatar}")
     @ApiResponses(value = {
         @ApiResponse(code = 400, message = "Something went wrong"),
         @ApiResponse(code = 403, message = "Access denied"),
@@ -137,6 +137,19 @@ public class UserController {
             e.printStackTrace();
         }
         return userService.loadImages(username);
+    }
+
+    @PostMapping("/update")
+    @ApiOperation(value = "${UserController.updateUserData}")
+    @ApiResponses(value = {
+            @ApiResponse(code = 400, message = "Something went wrong"),
+            @ApiResponse(code = 403, message = "Access denied"),
+            @ApiResponse(code = 422, message = "Invalid username")})
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_CLIENT')")
+    public UserResponseDTO updateUserData(HttpServletRequest req,
+                                 @RequestParam String firstname,
+                                 @RequestParam String lastname){
+        return userMapper.mapUserToResponse(userService.updateUserData(req, firstname, lastname));
     }
 
 }

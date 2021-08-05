@@ -28,6 +28,7 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
     private final String refreshUrl = "/users/refresh";
     private final String activationUrl = "/users/activation?uuid=";
     private final String uploadAvatarUrl = "/users/images";
+    private final String updateUserDataUrl = "/users/update";
 
     @Test
     public void simpleSignupSuccessTest() {
@@ -445,6 +446,44 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
 //        assertThat(uploadResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
 
     }
+    @Test
+    public void successUpdateUserData(){
+        UserDataDTO user = getValidUserForSignup();
+
+        this.restTemplate.postForObject(
+                getBaseUrl() + signupUrl,
+                user,
+                String.class);
+
+        String token = this.restTemplate.postForObject(
+                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + signinUrl)
+                        .queryParam("username", user.getUsername())
+                        .queryParam("password", user.getPassword())
+                        .build().encode().toUri(),
+                HttpEntity.EMPTY,
+                String.class);
+
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.put("Authorization", Collections.singletonList("Bearer " + token));
+
+        ResponseEntity<UserResponseDTO> updateUserDataResponse = this.restTemplate.exchange(
+                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + updateUserDataUrl)
+                        .queryParam("firstname", "newFirstName")
+                        .queryParam("lastname", "newLastName")
+                        .build().encode().toUri(),
+                HttpMethod.POST,
+                new HttpEntity<>(headers),
+                UserResponseDTO.class);
+
+        assertThat(updateUserDataResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        UserResponseDTO userDetails = updateUserDataResponse.getBody();
+
+        assertThat(userDetails.getFirstName()).isEqualTo("newFirstName");
+        assertThat(userDetails.getLastName()).isEqualTo("newLastName");
+
+    }
+
 
     private UserDataDTO getValidUserForSignup() {
         UUID randomUUID = UUID.randomUUID();
@@ -461,5 +500,7 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
         );
 
     }
+
+
 
 }
