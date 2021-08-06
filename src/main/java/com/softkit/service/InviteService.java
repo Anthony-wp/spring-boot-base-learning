@@ -22,6 +22,7 @@ public class InviteService {
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final InviteRepository inviteRepository;
+    private final String baseUrl = "http://localhost:8080";
 
     public void sendInvite(HttpServletRequest req, String email){
         if (userRepository.existsByEmail(email)){
@@ -36,5 +37,7 @@ public class InviteService {
         invite.setDepartureDate(ZonedDateTime.now());
         invite.setUser(user);
         inviteRepository.save(invite);
+        emailService.sendMail(email, String.format("%s/users/signup?username=%s", baseUrl, user.getUsername()),
+                String.format("User %s invite you", user.getUsername()));
     }
 }

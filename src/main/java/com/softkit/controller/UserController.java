@@ -46,8 +46,9 @@ public class UserController {
             @ApiResponse(code = 400, message = "Something went wrong"),
             @ApiResponse(code = 403, message = "Access denied"),
             @ApiResponse(code = 422, message = "Username is already in use")})
-    public String signup(@ApiParam("Signup User") @Valid @RequestBody UserDataDTO user) {
-        return userService.signup(userMapper.mapUserDataToUser(user));
+    public String signup(@ApiParam("Signup User") @Valid @RequestBody UserDataDTO user,
+                         @RequestParam(defaultValue = "") String username) {
+        return userService.signup(userMapper.mapUserDataToUser(user), username);
     }
 
     @GetMapping(value = "/me")

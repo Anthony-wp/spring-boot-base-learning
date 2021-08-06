@@ -2,11 +2,9 @@ package com.softkit;
 
 import com.softkit.dto.UserDataDTO;
 import com.softkit.dto.UserResponseDTO;
-import com.softkit.model.Invite;
 import com.softkit.repository.InviteRepository;
 import com.softkit.service.EmailService;
 import com.softkit.model.Role;
-import com.softkit.service.InviteService;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -17,7 +15,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.util.*;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.Assert.assertTrue;
 
 public class UserIntegrationControllerTests extends AbstractControllerTest {
 
@@ -378,7 +375,7 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
                 new HttpEntity<>(user),
                 String.class);
 
-        emailService.sendMail(user.getEmail(), "Registration successful!");
+        emailService.sendMail(user.getEmail(), "Registration successful!", "Registration successful!");
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
@@ -594,6 +591,49 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
 
         assertThat(sendInviteResponse.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
 
+    }
+
+    @Test
+    public void successSignupWithInvite(){
+        UserDataDTO user1 = getValidUserForSignup();
+        UserDataDTO user2 = getValidUserForSignup();
+        this.restTemplate.postForObject(
+                getBaseUrl() + signupUrl,
+                user1,
+                String.class);
+
+        String token = this.restTemplate.postForObject(
+                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + signinUrl)
+                        .queryParam("username", user1.getUsername())
+                        .queryParam("password", user1.getPassword())
+                        .build().encode().toUri(),
+                HttpEntity.EMPTY,
+                String.class);
+
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.put("Authorization", Collections.singletonList("Bearer " + token));
+
+        ResponseEntity<String> sendInviteResponse = this.restTemplate.exchange(
+                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + sendInviteUrl)
+                        .queryParam("email", user2.getEmail())
+                        .build().encode().toUri(),
+                HttpMethod.POST,
+                new HttpEntity<>(headers),
+                String.class);
+
+        assertThat(sendInviteResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+
+        ResponseEntity<String> response = this.restTemplate.exchange(
+                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + signupUrl)
+                        .queryParam("username", user1.getUsername())
+                        .build().encode().toUri(),
+                HttpMethod.POST,
+                new HttpEntity<>(user2),
+                String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     private UserDataDTO getValidUserForSignup() {

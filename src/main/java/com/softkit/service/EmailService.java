@@ -17,7 +17,7 @@ public class EmailService {
     EmailConfiguration emailConfiguration;
 
 
-    public void sendMail(String recipient, String msg){
+    public void sendMail(String recipient, String msg, String title){
         Properties prop = new Properties();
         prop.put("mail.smtp.auth", true);
         prop.put("mail.smtp.starttls.enable", "true");
@@ -37,7 +37,7 @@ public class EmailService {
             Message message = new MimeMessage(session);
             message.setFrom(new InternetAddress(emailConfiguration.getUsername()));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipient));
-            message.setSubject("Registration successful");
+            message.setSubject(title);
 
             MimeBodyPart mimeBodyPart = new MimeBodyPart();
             mimeBodyPart.setContent(msg, "text/html");

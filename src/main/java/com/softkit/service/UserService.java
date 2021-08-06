@@ -1,7 +1,10 @@
 package com.softkit.service;
 
 import com.softkit.exception.CustomException;
+import com.softkit.model.Invite;
+import com.softkit.model.InviteStatus;
 import com.softkit.model.User;
+import com.softkit.repository.InviteRepository;
 import com.softkit.repository.UserRepository;
 import com.softkit.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +37,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
+    private final InviteRepository inviteRepository;
 
     public String signin(String username, String password) {
         try {
@@ -47,7 +51,13 @@ public class UserService {
         }
     }
 
-    public String signup(User user) {
+    public String signup(User user, String username) {
+        if (!username.equals("")){
+            Invite invite = inviteRepository.findByEmailAndUser(user.getEmail(), userRepository.findByUsername(username));
+            invite.setStatus(InviteStatus.CLOSED);
+            inviteRepository.save(invite);
+            inviteRepository.deleteByEmailAndStatus(user.getEmail(), InviteStatus.PENDING);
+        }
         if (!userRepository.existsByUsernameIgnoreCase(user.getUsername())) {
             if (userRepository.existsByEmailIgnoreCase(user.getEmail())){
                 throw new CustomException("Email is already in use", HttpStatus.UNPROCESSABLE_ENTITY);
@@ -58,7 +68,7 @@ public class UserService {
             String url = String.format("%s/users/activation?uuid=%s", baseUrl, uuid);
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             userRepository.save(user);
-            emailService.sendMail(user.getEmail(), url);
+            emailService.sendMail(user.getEmail(), url, "Registration successful");
             return jwtTokenProvider.createToken(user.getUsername(), user.getRoles());
         } else {
             throw new CustomException("Username is already in use", HttpStatus.UNPROCESSABLE_ENTITY);
