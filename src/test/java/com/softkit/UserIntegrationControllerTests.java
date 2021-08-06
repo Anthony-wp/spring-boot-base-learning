@@ -2,8 +2,11 @@ package com.softkit;
 
 import com.softkit.dto.UserDataDTO;
 import com.softkit.dto.UserResponseDTO;
+import com.softkit.model.Invite;
+import com.softkit.repository.InviteRepository;
 import com.softkit.service.EmailService;
 import com.softkit.model.Role;
+import com.softkit.service.InviteService;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -14,11 +17,13 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.util.*;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class UserIntegrationControllerTests extends AbstractControllerTest {
 
     @MockBean
     private EmailService emailService;
+    private InviteRepository inviteRepository;
 
     private final String signupUrl = "/users/signup";
     private final String signinUrl = "/users/signin";
@@ -29,6 +34,8 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
     private final String activationUrl = "/users/activation?uuid=";
     private final String uploadAvatarUrl = "/users/images";
     private final String updateUserDataUrl = "/users/update";
+    private final String updateUserDataForAdminUrl = "/users/updateForAdmin";
+    private final String sendInviteUrl = "/invites/sendInvite";
 
     @Test
     public void simpleSignupSuccessTest() {
@@ -484,6 +491,110 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
 
     }
 
+    @Test
+    public void correctAnswerToUpdateDataAnotherUser_ifCurrentUserIsNotAdmin () {
+        UUID randomUUID = UUID.randomUUID();
+        UserDataDTO user = new UserDataDTO(
+                randomUUID + "softkit",
+                "Anthony",
+                "Vallpon",
+                new GregorianCalendar(2001, Calendar.JANUARY, 17),
+                randomUUID + "youremail@softkitit.com",
+                randomUUID + "HeisenbuG1!",
+                true,
+                null,
+                Lists.newArrayList(Role.ROLE_CLIENT));
+
+        this.restTemplate.postForObject(
+                getBaseUrl() + signupUrl,
+                user,
+                String.class);
+
+        String token = this.restTemplate.postForObject(
+                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + signinUrl)
+                        .queryParam("username", user.getUsername())
+                        .queryParam("password", user.getPassword())
+                        .build().encode().toUri(),
+                HttpEntity.EMPTY,
+                String.class);
+
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.put("Authorization", Collections.singletonList("Bearer " + token));
+
+        ResponseEntity<UserResponseDTO> updateUserDataResponse = this.restTemplate.exchange(
+                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + updateUserDataForAdminUrl)
+                        .queryParam("username", user.getUsername())
+                        .queryParam("firstname", "newFirstName")
+                        .queryParam("lastname", "newLastName")
+                        .build().encode().toUri(),
+                HttpMethod.POST,
+                new HttpEntity<>(headers),
+                UserResponseDTO.class);
+
+        assertThat(updateUserDataResponse.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+
+    }
+
+    @Test
+    public void successSendInviteNewUser(){
+        UserDataDTO user = getValidUserForSignup();
+        this.restTemplate.postForObject(
+                getBaseUrl() + signupUrl,
+                user,
+                String.class);
+        String token = this.restTemplate.postForObject(
+                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + signinUrl)
+                        .queryParam("username", user.getUsername())
+                        .queryParam("password", user.getPassword())
+                        .build().encode().toUri(),
+                HttpEntity.EMPTY,
+                String.class);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.put("Authorization", Collections.singletonList("Bearer " + token));
+
+        ResponseEntity<String> sendInviteResponse = this.restTemplate.exchange(
+                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + sendInviteUrl)
+                        .queryParam("email", "antone.vallpon@softkit.company")
+                        .build().encode().toUri(),
+                HttpMethod.POST,
+                new HttpEntity<>(headers),
+                String.class);
+
+        assertThat(sendInviteResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+    }
+
+    @Test
+    public void correctAnswerWhenInviteRegisteredUser(){
+        UserDataDTO user = getValidUserForSignup();
+        this.restTemplate.postForObject(
+                getBaseUrl() + signupUrl,
+                user,
+                String.class);
+        String token = this.restTemplate.postForObject(
+                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + signinUrl)
+                        .queryParam("username", user.getUsername())
+                        .queryParam("password", user.getPassword())
+                        .build().encode().toUri(),
+                HttpEntity.EMPTY,
+                String.class);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.put("Authorization", Collections.singletonList("Bearer " + token));
+
+        ResponseEntity<String> sendInviteResponse = this.restTemplate.exchange(
+                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + sendInviteUrl)
+                        .queryParam("email", user.getEmail())
+                        .build().encode().toUri(),
+                HttpMethod.POST,
+                new HttpEntity<>(headers),
+                String.class);
+
+        assertThat(sendInviteResponse.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+
+    }
 
     private UserDataDTO getValidUserForSignup() {
         UUID randomUUID = UUID.randomUUID();

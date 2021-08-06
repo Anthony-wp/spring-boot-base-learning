@@ -137,4 +137,13 @@ public class UserService {
         userRepository.save(user);
         return user;
     }
+
+    @Transactional
+    public User updateUserDataForAdmin(String username, String firstname, String lastname){
+        User user = userRepository.findByUsername(username);
+        user.setFirstName(firstname);
+        user.setLastName(lastname);
+        userRepository.save(user);
+        return user;
+    }
 }

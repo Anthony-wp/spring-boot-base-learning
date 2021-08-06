@@ -152,4 +152,17 @@ public class UserController {
         return userMapper.mapUserToResponse(userService.updateUserData(req, firstname, lastname));
     }
 
+    @PostMapping("/updateForAdmin")
+    @ApiOperation(value = "${UserController.updateUserDataForAdmin}")
+    @ApiResponses(value = {
+            @ApiResponse(code = 400, message = "Something went wrong"),
+            @ApiResponse(code = 403, message = "Access denied"),
+            @ApiResponse(code = 422, message = "Invalid username")})
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public UserResponseDTO updateUserDataForAdmin(@RequestParam String username,
+                                          @RequestParam String firstname,
+                                          @RequestParam String lastname){
+        return userMapper.mapUserToResponse(userService.updateUserDataForAdmin(username, firstname, lastname));
+    }
+
 }

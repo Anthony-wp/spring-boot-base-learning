@@ -10,7 +10,6 @@ import javax.validation.constraints.Past;
 import javax.validation.constraints.Size;
 import java.time.ZonedDateTime;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
 @Entity(name = "Users")
@@ -21,6 +20,7 @@ public class User {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Integer id;
     
     @Size(min = 4, max = 255, message = "Minimum username length: 4 characters")

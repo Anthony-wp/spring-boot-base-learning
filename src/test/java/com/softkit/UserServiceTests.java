@@ -2,21 +2,25 @@ package com.softkit;
 
 import com.softkit.exception.CustomException;
 import com.softkit.model.User;
+import com.softkit.security.JwtTokenProvider;
 import com.softkit.service.EmailService;
 import com.softkit.service.UserService;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 
+import javax.servlet.http.HttpServletRequest;
 import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.UUID;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
 
 
 /**
@@ -45,6 +49,7 @@ public class UserServiceTests {
             User user = new User(null, "test", "test", "test",
                     new GregorianCalendar(2001, Calendar.JANUARY, 17) , "test", "test", UUID.randomUUID().toString(), false, null, ZonedDateTime.now(),
                     Lists.newArrayList());
+            userService.signup(user);
         } catch (CustomException e) {
             assertThat(e.getMessage()).isEqualTo("Username is already in use");
             assertThat(e.getHttpStatus()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
@@ -69,7 +74,6 @@ public class UserServiceTests {
         String token = userService.signup(user);
         assertThat(token).isNotBlank();
         userService.delete(user.getUsername());
-
     }
 
     @Test
@@ -102,20 +106,5 @@ public class UserServiceTests {
 
         assertThat(token).isNotBlank();
     }
-
-//    @Test
-//    public void successUpdateUserData(){
-//        User user = new User(null, "test", "test", "test",
-//                new GregorianCalendar(2001, Calendar.JANUARY, 17) , "test", "test", UUID.randomUUID().toString(), true, null, ZonedDateTime.now(),
-//                Lists.newArrayList());
-//        System.out.println(userService.signup(user));
-//        String token = userService.signin("test", "test");
-//        User newUser = userService.updateUserData(token, "newFirstName", "newLastName");
-//
-//        assertThat(newUser.getFirstName()).isEqualTo("newFirstName");
-//        assertThat(newUser.getLastName()).isEqualTo("newLastName");
-//    }
-
-
 
 }
