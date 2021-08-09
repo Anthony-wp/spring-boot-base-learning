@@ -8,6 +8,8 @@ import com.softkit.repository.InviteRepository;
 import com.softkit.repository.UserRepository;
 import com.softkit.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -39,5 +41,9 @@ public class InviteService {
         inviteRepository.save(invite);
         emailService.sendMail(email, String.format("%s/users/signup?username=%s", baseUrl, user.getUsername()),
                 String.format("User %s invite you", user.getUsername()));
+    }
+
+    public Page<Invite> allInvites(Pageable page){
+        return inviteRepository.findAll(page);
     }
 }
