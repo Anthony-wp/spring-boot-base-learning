@@ -53,5 +53,5 @@ email:
 
 file:
   csv:
-    path: /home/softkit/IdeaProjects/spring-boot-base-learning
+    path: /home/softkit/IdeaProjects/spring-boot-base-learning/src/main/resources
 

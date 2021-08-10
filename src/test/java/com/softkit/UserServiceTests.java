@@ -167,7 +167,7 @@ public class UserServiceTests {
                 Lists.newArrayList(), null);
         userService.signup(user1,"");
         userService.signup(user2,"");
-        userService.exportToCsv();
+        assertThat(userService.exportToCsv()).isNotEmpty();
     }
 
 }

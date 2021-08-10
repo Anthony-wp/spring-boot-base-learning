@@ -21,10 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.apache.commons.io.IOUtils;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -200,11 +197,11 @@ public class UserService {
         for (String user : users){
             csvData.add(user.split(","));
         }
-        try(CSVWriter writer = new CSVWriter(new FileWriter(pathToCsvFile + "/test.csv"))){
+        try(CSVWriter writer = new CSVWriter(new FileWriter(pathToCsvFile + "/Users.csv"))){
             writer.writeAll(csvData);
         }
 
-        InputStream in = getClass().getResourceAsStream("/test.csv");
+        InputStream in = new FileInputStream(pathToCsvFile + "/Users.csv");
         return IOUtils.toByteArray(in);
 
     }

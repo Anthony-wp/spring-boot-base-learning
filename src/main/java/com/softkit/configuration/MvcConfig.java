@@ -11,10 +11,14 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class MvcConfig implements WebMvcConfigurer {
     @Value("${images.path.string}")
     private String uploadPath;
+    @Value("${file.csv.path}")
+    private String pathToCsvFile;
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/users/images/**")
                 .addResourceLocations("file://" + uploadPath + "/");
+        registry.addResourceHandler("/users/exportToCsv/**")
+                .addResourceLocations("file://" + pathToCsvFile + "/");
     }
 }
