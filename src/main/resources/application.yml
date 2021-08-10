@@ -51,3 +51,7 @@ email:
     username: anthony.vallpon@gmail.com
     password: planck662607015
 
+file:
+  csv:
+    path: /home/softkit/IdeaProjects/spring-boot-base-learning
+

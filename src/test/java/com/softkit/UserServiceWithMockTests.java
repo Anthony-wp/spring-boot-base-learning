@@ -3,8 +3,11 @@ package com.softkit;
 
 import com.softkit.exception.CustomException;
 import com.softkit.model.User;
+import com.softkit.repository.InviteRepository;
 import com.softkit.repository.UserRepository;
+import com.softkit.service.EmailService;
 import com.softkit.service.UserService;
+import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -18,6 +21,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import java.time.ZonedDateTime;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.UUID;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -37,6 +45,10 @@ public class UserServiceWithMockTests {
     //    mocking all repository calls
     @MockBean
     private UserRepository userRepository;
+    @MockBean
+    private InviteRepository inviteRepository;
+    @MockBean
+    private EmailService emailService;
 
 
     /**
@@ -53,7 +65,9 @@ public class UserServiceWithMockTests {
 
         try {
 //        username must be the same, because of our above rule for mocking
-//            userService.signup(new User(null, username, null, null, null, false, null));
+            userService.signup(new User(1, "test", "test", "test",
+                    new GregorianCalendar(2001, Calendar.JANUARY, 17) , "test", "test", UUID.randomUUID().toString(), false, null, ZonedDateTime.now(),
+                    Lists.newArrayList(), null), "");
         } catch (CustomException e) {
             assertThat(e.getMessage()).isEqualTo("Username is already in use");
             assertThat(e.getHttpStatus()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);

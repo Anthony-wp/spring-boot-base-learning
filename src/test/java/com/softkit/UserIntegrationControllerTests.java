@@ -33,6 +33,7 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
     private final String updateUserDataUrl = "/users/update";
     private final String updateUserDataForAdminUrl = "/users/updateForAdmin";
     private final String sendInviteUrl = "/invites/sendInvite";
+    private final String changeEmailUrl = "/users/changeEmail";
 
     @Test
     public void simpleSignupSuccessTest() {
@@ -183,7 +184,7 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
                 String.class);
 
         UserDataDTO user2 = getValidUserForSignup();
-        String token2 = this.restTemplate.postForObject(
+        this.restTemplate.postForObject(
                 getBaseUrl() + signupUrl,
                 user2,
                 String.class);
@@ -234,7 +235,7 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
                 String.class);
 
         UserDataDTO user2 = getValidUserForSignup();
-        String token2 = this.restTemplate.postForObject(
+        this.restTemplate.postForObject(
                 getBaseUrl() + signupUrl,
                 user2,
                 String.class);
@@ -257,7 +258,7 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
     @Test
     public void refreshTokenUserWhichIsSignin(){
         UserDataDTO user = getValidUserForSignup();
-        String token1 = this.restTemplate.postForObject(
+        this.restTemplate.postForObject(
                 getBaseUrl() + signupUrl,
                 user,
                 String.class);
@@ -283,7 +284,7 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
-//
+
 //    @Test
 //    public void refreshWithoutToken(){
 //        UserDataDTO user = getValidUserForSignup();
@@ -315,7 +316,7 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
         UserDataDTO user1 = getValidUserForSignup();
         user1.setEmail("BLA@gmail.com");
 
-        String token1 = this.restTemplate.postForObject(
+        this.restTemplate.postForObject(
                 getBaseUrl() + signupUrl,
                 user1,
                 String.class);
@@ -338,7 +339,7 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
         UserDataDTO user1 = getValidUserForSignup();
         user1.setUsername("AnThOnY");
 
-        String token1 = this.restTemplate.postForObject(
+       this.restTemplate.postForObject(
                 getBaseUrl() + signupUrl,
                 user1,
                 String.class);
@@ -395,7 +396,7 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
                 Lists.newArrayList(Role.ROLE_ADMIN, Role.ROLE_CLIENT)
         );
 
-        String token = this.restTemplate.postForObject(
+        this.restTemplate.postForObject(
                 getBaseUrl() + signupUrl,
                 user,
                 String.class);
@@ -407,7 +408,7 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
                         .build().encode().toUri(),
                 HttpMethod.POST,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<HashMap<String, Object>>() {
+                new ParameterizedTypeReference<>() {
                 });
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_ACCEPTABLE);
@@ -635,6 +636,7 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
+
 
     private UserDataDTO getValidUserForSignup() {
         UUID randomUUID = UUID.randomUUID();

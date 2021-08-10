@@ -1,5 +1,6 @@
 package com.softkit.service;
 
+import com.opencsv.CSVWriter;
 import com.softkit.exception.CustomException;
 import com.softkit.model.Invite;
 import com.softkit.model.InviteStatus;
@@ -17,13 +18,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.apache.commons.io.IOUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.ZonedDateTime;
-import java.util.NoSuchElementException;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +34,8 @@ public class UserService {
 
     @Value("${images.path.string}")
     private String filePathToSaveUserImages;
+    @Value("${file.csv.path}")
+    private String pathToCsvFile;
     private final String baseUrl = "http://localhost:8080";
     private final EmailService emailService;
     private final UserRepository userRepository;
@@ -156,4 +161,52 @@ public class UserService {
         userRepository.save(user);
         return user;
     }
+
+    @Transactional
+    public String changeEmail(HttpServletRequest req, String email){
+        if (userRepository.existsByEmail(email)){
+            throw new CustomException("User with this email is already registered", HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+        User user = userRepository.findByUsername(jwtTokenProvider.getUsername(jwtTokenProvider.resolveToken(req)));
+        String url = String.format("%s/users/activationNewEmail?email=%s", baseUrl, email);
+        emailService.sendMail(email, url, "Changing email");
+        user.setUnconfirmedEmail(email);
+        userRepository.save(user);
+        return "Confirmation message sent to new email";
+    }
+
+    @Transactional
+    public String activationNewEmail(String email){
+        if (userRepository.existsByEmail(email)){
+            throw new CustomException("User with this email is already registered", HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+        User user = userRepository.findByUnconfirmedEmail(email);
+        if (user == null){
+            throw new CustomException("Emails don't match", HttpStatus.NOT_FOUND);
+        }
+        user.setEmail(email);
+        user.setUnconfirmedEmail(null);
+        userRepository.save(user);
+        return "Changing email is successful";
+    }
+
+    public byte[] exportToCsv() throws IOException{
+        String[] users = userRepository.findAllExceptPassword();
+        List<String[]> csvData = new ArrayList<>();
+        String[] header = {"id", "username", "first_name", "last_name",
+                            "birthday", "email", "activation_key", "is_activate",
+                            "user_avatar", "registration_date", "unconfirmed_email"};
+        csvData.add(header);
+        for (String user : users){
+            csvData.add(user.split(","));
+        }
+        try(CSVWriter writer = new CSVWriter(new FileWriter(pathToCsvFile + "/test.csv"))){
+            writer.writeAll(csvData);
+        }
+
+        InputStream in = getClass().getResourceAsStream("/test.csv");
+        return IOUtils.toByteArray(in);
+
+    }
+
 }

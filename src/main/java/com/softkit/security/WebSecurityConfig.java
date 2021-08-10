@@ -53,6 +53,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/users/signin").permitAll()
                 .antMatchers("/users/signup").permitAll()
                 .antMatchers("/users/activation").permitAll()
+                .antMatchers("/users/activationNewEmail").permitAll()
                 .antMatchers("/h2-console/**/**").permitAll()
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 // Disallow everything else..

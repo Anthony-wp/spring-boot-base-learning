@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.persistence.*;
+import javax.validation.constraints.Email;
 import javax.validation.constraints.Past;
 import javax.validation.constraints.Size;
 import java.time.ZonedDateTime;
@@ -41,6 +42,7 @@ public class User {
     private Calendar birthday;
     
     @Column(unique = true, nullable = false)
+    @Email
     private String email;
     
     @Size(min = 8, message = "Minimum password length: 8 characters")
@@ -61,5 +63,6 @@ public class User {
     @ElementCollection(fetch = FetchType.EAGER)
     private List<Role> roles;
 
-
+    @Email
+    private String unconfirmedEmail;
 }

@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -49,14 +50,14 @@ public class UserServiceTests {
     public void successUserSignupTest() {
         String signupToken1 = userService.signup(new User(null, "test", "test", "test",
                 new GregorianCalendar(2001, Calendar.JANUARY, 17) , "test", "test", UUID.randomUUID().toString(), false, null, ZonedDateTime.now(),
-                Lists.newArrayList()), "");
+                Lists.newArrayList(), null), "");
 
         assertThat(signupToken1).isNotBlank();
 
         try {
             User user = new User(null, "test", "test", "test",
                     new GregorianCalendar(2001, Calendar.JANUARY, 17) , "test", "test", UUID.randomUUID().toString(), false, null, ZonedDateTime.now(),
-                    Lists.newArrayList());
+                    Lists.newArrayList(), null);
             userService.signup(user, "");
         } catch (CustomException e) {
             assertThat(e.getMessage()).isEqualTo("Username is already in use");
@@ -78,7 +79,7 @@ public class UserServiceTests {
     public void successDeleteUserWhichIsSignup(){
         User user = new User(null, "test", "test", "test",
                 new GregorianCalendar(2001, Calendar.JANUARY, 17) , "test", "test", UUID.randomUUID().toString(), false, null, ZonedDateTime.now(),
-                Lists.newArrayList());
+                Lists.newArrayList(), null);
         String token = userService.signup(user, "");
         assertThat(token).isNotBlank();
         userService.delete(user.getUsername());
@@ -98,7 +99,7 @@ public class UserServiceTests {
     public void successSearchUserWhichIsSignup(){
         User user = new User(null, "test", "test", "test",
                 new GregorianCalendar(2001, Calendar.JANUARY, 17) , "test", "test", UUID.randomUUID().toString(), false, null, ZonedDateTime.now(),
-                Lists.newArrayList());
+                Lists.newArrayList(), null);
         String token = userService.signup(user, "");
         User searchUser = userService.search(user.getUsername());
         assertThat(searchUser.getUsername()).isEqualTo(user.getUsername());
@@ -108,7 +109,7 @@ public class UserServiceTests {
     public void successRefreshTokenUserWhichIsSignin(){
         User user = new User(null, "test", "test", "test",
                 new GregorianCalendar(2001, Calendar.JANUARY, 17) , "test", "test", UUID.randomUUID().toString(), false, null, ZonedDateTime.now(),
-                Lists.newArrayList());
+                Lists.newArrayList(), null);
         userService.signup(user, "");
         String token = userService.refresh("test");
 
@@ -120,7 +121,7 @@ public class UserServiceTests {
     public void correctSortingOfInvitations(){
         User user = new User(1, "test", "test", "test",
                 new GregorianCalendar(2001, Calendar.JANUARY, 17) , "test", "test", UUID.randomUUID().toString(), false, null, ZonedDateTime.now(),
-                Lists.newArrayList());
+                Lists.newArrayList(), null);
         userService.signup(user, "");
         inviteRepository.save(new Invite(1, "test1@gmial.com", user,  ZonedDateTime.now(), InviteStatus.PENDING));
         inviteRepository.save(new Invite(2, "test2@gmial.com", user,  ZonedDateTime.now(), InviteStatus.PENDING));
@@ -144,7 +145,7 @@ public class UserServiceTests {
     public void paginationTest(){
         User user = new User(1, "test", "test", "test",
                 new GregorianCalendar(2001, Calendar.JANUARY, 17) , "test", "test", UUID.randomUUID().toString(), false, null, ZonedDateTime.now(),
-                Lists.newArrayList());
+                Lists.newArrayList(), null);
         userService.signup(user, "");
         inviteRepository.save(new Invite(1, "test1@gmial.com", user,  ZonedDateTime.now(), InviteStatus.PENDING));
         inviteRepository.save(new Invite(2, "test2@gmial.com", user,  ZonedDateTime.now(), InviteStatus.PENDING));
@@ -154,6 +155,19 @@ public class UserServiceTests {
         Page<Invite> invites = inviteService.allInvites(PageRequest.of(3, 3));
 
         assertThat(invites.getTotalPages()).isEqualTo(2);
+    }
+
+    @Test
+    public void testExportToCsv() throws IOException {
+        User user1 = new User(1, "test1", "test", "test",
+                new GregorianCalendar(2001, Calendar.JANUARY, 17) , "test1@gmail.com", "test", UUID.randomUUID().toString(), false, null, ZonedDateTime.now(),
+                Lists.newArrayList(), null);
+        User user2 = new User(2, "test2", "test", "test",
+                new GregorianCalendar(2001, Calendar.JANUARY, 17) , "test2@gmaul.com", "test", UUID.randomUUID().toString(), false, null, ZonedDateTime.now(),
+                Lists.newArrayList(), null);
+        userService.signup(user1,"");
+        userService.signup(user2,"");
+        userService.exportToCsv();
     }
 
 }

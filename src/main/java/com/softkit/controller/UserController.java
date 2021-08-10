@@ -7,6 +7,7 @@ import com.softkit.service.UserService;
 import io.swagger.annotations.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -15,7 +16,9 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import javax.validation.constraints.Email;
 import java.io.IOException;
+import java.io.InputStream;
 
 @CrossOrigin
 @RestController
@@ -28,6 +31,7 @@ public class UserController {
 
     private final UserService userService;
     private final UserMapper userMapper;
+
 
     @PostMapping("/signin")
     @ApiOperation(value = "${UserController.signin}")
@@ -166,4 +170,32 @@ public class UserController {
         return userMapper.mapUserToResponse(userService.updateUserDataForAdmin(username, firstname, lastname));
     }
 
+    @PostMapping("/changeEmail")
+    @ApiOperation(value = "${UserController.changeEmail}")
+    @ApiResponses(value = {
+            @ApiResponse(code = 400, message = "Something went wrong"),
+            @ApiResponse(code = 403, message = "Access denied"),
+            @ApiResponse(code = 422, message = "Invalid email")})
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_CLIENT')")
+    public String changeEmail(HttpServletRequest req, @Email String email){
+        return userService.changeEmail(req, email);
+    }
+
+    @PostMapping("/activationNewEmail")
+    @ApiOperation(value = "${UserController.activationNewEmail}")
+    @ApiResponses(value = {
+            @ApiResponse(code = 400, message = "Something went wrong"),})
+    public String activationNewEmail(@Email String email){
+        return userService.activationNewEmail(email);
+    }
+
+    @GetMapping(value = "/exportToCsv", produces = "text/csv")
+    @ApiOperation(value = "${UserController.exportToCsv}")
+    @ApiResponses(value = {
+            @ApiResponse(code = 400, message = "Something went wrong"),
+            @ApiResponse(code = 403, message = "Access denied")})
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public @ResponseBody byte[] exportToCsv() throws IOException {
+        return userService.exportToCsv();
+    }
 }
