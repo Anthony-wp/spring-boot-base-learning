@@ -13,6 +13,8 @@ import com.softkit.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.validator.internal.constraintvalidators.bv.EmailValidator;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -24,7 +26,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.apache.commons.io.IOUtils;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.Email;
 import java.io.*;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -96,6 +97,7 @@ public class UserService {
     }
 
     @Transactional
+    @Cacheable(cacheNames = "searchCash", key = "#username")
     public User search(String username) {
         User user = userRepository.findByUsername(username);
         if (user != null){
@@ -126,6 +128,7 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "searchCash")
     public void uploadImage(HttpServletRequest req, MultipartFile file) throws IOException {
         File uploadDir = new File(filePathToSaveUserImages);
         if (!new File(filePathToSaveUserImages).exists()){
@@ -146,6 +149,7 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "searchCash")
     public User updateUserData(HttpServletRequest req, String firstname, String lastname){
         User user = userRepository.findByUsername(jwtTokenProvider.getUsername(jwtTokenProvider.resolveToken(req)));
         user.setFirstName(firstname);
@@ -155,6 +159,7 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "searchCash")
     public User updateUserDataForAdmin(String username, String firstname, String lastname){
         User user = userRepository.findByUsername(username);
         user.setFirstName(firstname);

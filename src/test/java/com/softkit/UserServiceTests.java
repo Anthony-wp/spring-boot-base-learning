@@ -1,16 +1,14 @@
 package com.softkit;
 
-import com.opencsv.exceptions.CsvValidationException;
 import com.softkit.exception.CustomException;
 import com.softkit.model.Invite;
 import com.softkit.model.InviteStatus;
 import com.softkit.model.User;
 import com.softkit.repository.InviteRepository;
-import com.softkit.security.JwtTokenProvider;
 import com.softkit.service.EmailService;
 import com.softkit.service.InviteService;
 import com.softkit.service.UserService;
-import org.apache.commons.io.IOUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,17 +19,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
-import javax.imageio.stream.FileImageInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -44,6 +34,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
  * so all interactions with the application must be through HTTP layer, that's very important to keep data clean
  */
 
+@Slf4j
 @SpringBootTest(classes = {StarterApplication.class})
 public class UserServiceTests {
 
@@ -111,7 +102,7 @@ public class UserServiceTests {
     @Test
     public void successSearchUserWhichIsSignup(){
         User user = new User(null, "test", "test", "test",
-                new GregorianCalendar(2001, Calendar.JANUARY, 17) , "test", "test", UUID.randomUUID().toString(), false, null, ZonedDateTime.now(),
+                new GregorianCalendar(2001, Calendar.JANUARY, 17) , "toxa17012001@gmail.com", "test", UUID.randomUUID().toString(), false, null, ZonedDateTime.now(),
                 Lists.newArrayList(), null);
         String token = userService.signup(user, "");
         User searchUser = userService.search(user.getUsername());
@@ -183,13 +174,5 @@ public class UserServiceTests {
         assertThat(userService.exportToCsv()).isNotEmpty();
     }
 
-//    @Test
-//    public void testBulkUpload() throws CsvValidationException, IOException {
-//        User user1 = new User(1, "test1", "test", "test",
-//                new GregorianCalendar(2001, Calendar.JANUARY, 17) , "toxa17012001@gmail.com", "test", UUID.randomUUID().toString(), false, null, ZonedDateTime.now(),
-//                Lists.newArrayList(), null);
-//        userService.signup(user1,"");
-//        System.out.println(userService.bulkUpload(new File(pathToCsvFile + "/Users.csv")));
-//    }
 
 }

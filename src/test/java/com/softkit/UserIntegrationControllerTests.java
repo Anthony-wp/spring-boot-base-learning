@@ -2,11 +2,15 @@ package com.softkit;
 
 import com.softkit.dto.UserDataDTO;
 import com.softkit.dto.UserResponseDTO;
+import com.softkit.model.User;
 import com.softkit.repository.InviteRepository;
+import com.softkit.repository.UserRepository;
 import com.softkit.service.EmailService;
 import com.softkit.model.Role;
+import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.FileSystemResource;
@@ -20,11 +24,14 @@ import java.util.*;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+@Slf4j
 public class UserIntegrationControllerTests extends AbstractControllerTest {
 
     @MockBean
     private EmailService emailService;
     private InviteRepository inviteRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     private final String signupUrl = "/users/signup";
     private final String signinUrl = "/users/signin";
@@ -290,31 +297,6 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
-//    @Test
-//    public void refreshWithoutToken(){
-//        UserDataDTO user = getValidUserForSignup();
-//
-//        String token1 = this.restTemplate.postForObject(
-//                getBaseUrl() + signupUrl,
-//                user,
-//                String.class);
-//
-//        HttpHeaders headers = new HttpHeaders();
-//        headers.put("Authorization", Collections.singletonList("Bearer " + token1));
-//
-//        String httpUrl = getBaseUrl() + refreshUrl;
-//
-//        ResponseEntity<String> response = this.restTemplate.exchange(
-//                UriComponentsBuilder.fromHttpUrl(httpUrl)
-//                        .queryParam("username", "fakename")
-//                        .build().encode().toUri(),
-//                HttpMethod.POST,
-//                new HttpEntity<>(headers),
-//                String.class);
-//
-//        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
-//
-//    }
 
     @Test
     public void registrationWithSimilarEmails(){
@@ -724,6 +706,111 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
         assertThat(uploadResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(uploadResponse.getBody()).isEqualTo("Users who were able to invite: 2; Users who were already in the system: 1");
     }
+
+    @Test
+    public void successCheckCaching(){
+        UserDataDTO user1 = getValidUserForSignup();
+        String token1 = this.restTemplate.postForObject(
+                getBaseUrl() + signupUrl,
+                user1,
+                String.class);
+
+        UserDataDTO user2 = getValidUserForSignup();
+        this.restTemplate.postForObject(
+                getBaseUrl() + signupUrl,
+                user2,
+                String.class);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.put("Authorization", Collections.singletonList("Bearer " + token1));
+
+
+        ResponseEntity<String> searchResponse1 = this.restTemplate.exchange(
+                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + searchUrl)
+                        .queryParam("userName", user2.getUsername())
+                        .build().encode().toUri(),
+                HttpMethod.GET,
+                new HttpEntity<>(headers),
+                String.class);
+
+        assertThat(searchResponse1.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        ResponseEntity<String> deleteResponse = this.restTemplate.exchange(
+                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + deleteUrl)
+                        .queryParam("userName", user2.getUsername())
+                        .build().encode().toUri(),
+                HttpMethod.POST,
+                new HttpEntity<>(headers),
+                String.class);
+
+        assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        ResponseEntity<String> searchResponse2 = this.restTemplate.exchange(
+                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + searchUrl)
+                        .queryParam("userName", user2.getUsername())
+                        .build().encode().toUri(),
+                HttpMethod.GET,
+                new HttpEntity<>(headers),
+                String.class);
+
+        assertThat(searchResponse2.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    public void successUpdateUserDataWithCachingLogic(){
+        UserDataDTO user1 = getValidUserForSignup();
+        UserDataDTO user2 = getValidUserForSignup();
+
+        this.restTemplate.postForObject(
+                getBaseUrl() + signupUrl,
+                user1,
+                String.class);
+
+        this.restTemplate.postForObject(
+                getBaseUrl() + signupUrl,
+                user2,
+                String.class);
+
+        String token = this.restTemplate.postForObject(
+                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + signinUrl)
+                        .queryParam("username", user1.getUsername())
+                        .queryParam("password", user1.getPassword())
+                        .build().encode().toUri(),
+                HttpEntity.EMPTY,
+                String.class);
+
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.put("Authorization", Collections.singletonList("Bearer " + token));
+
+        ResponseEntity<String> searchResponse = this.restTemplate.exchange(
+                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + searchUrl)
+                        .queryParam("userName", user2.getUsername())
+                        .build().encode().toUri(),
+                HttpMethod.GET,
+                new HttpEntity<>(headers),
+                String.class);
+
+        assertThat(searchResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        ResponseEntity<UserResponseDTO> updateUserDataResponse = this.restTemplate.exchange(
+                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + updateUserDataForAdminUrl)
+                        .queryParam("username", user2.getUsername())
+                        .queryParam("firstname", "newFirstName")
+                        .queryParam("lastname", "newLastName")
+                        .build().encode().toUri(),
+                HttpMethod.POST,
+                new HttpEntity<>(headers),
+                UserResponseDTO.class);
+
+        assertThat(updateUserDataResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        User userDetails = userRepository.findByUsername(user2.getUsername());
+
+        assertThat(userDetails.getFirstName()).isEqualTo("newFirstName");
+        assertThat(userDetails.getLastName()).isEqualTo("newLastName");
+
+    }
+
 
     private UserDataDTO getValidUserForSignup() {
         UUID randomUUID = UUID.randomUUID();
