@@ -24,7 +24,7 @@ public class Invite {
     private String email;
 
     @ManyToOne
-    @JoinColumn(nullable = false)
+    @JoinColumn
     private User user;
 
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm")

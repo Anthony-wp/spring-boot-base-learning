@@ -1,6 +1,8 @@
 package com.softkit.service;
 
+import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
+import com.opencsv.exceptions.CsvValidationException;
 import com.softkit.exception.CustomException;
 import com.softkit.model.Invite;
 import com.softkit.model.InviteStatus;
@@ -9,6 +11,7 @@ import com.softkit.repository.InviteRepository;
 import com.softkit.repository.UserRepository;
 import com.softkit.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.validator.internal.constraintvalidators.bv.EmailValidator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.apache.commons.io.IOUtils;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.Email;
 import java.io.*;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -33,6 +37,8 @@ public class UserService {
     private String filePathToSaveUserImages;
     @Value("${file.csv.path}")
     private String pathToCsvFile;
+    @Value("${bulk.file.upload}")
+    private String bulkFileUpload;
     private final String baseUrl = "http://localhost:8080";
     private final EmailService emailService;
     private final UserRepository userRepository;
@@ -40,6 +46,7 @@ public class UserService {
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
     private final InviteRepository inviteRepository;
+    private final InviteService inviteService;
 
     public String signin(String username, String password) {
         try {
@@ -81,7 +88,6 @@ public class UserService {
         return userRepository.findByUsername(jwtTokenProvider.getUsername(jwtTokenProvider.resolveToken(req)));
     }
 
-    //  method must delete user, by username, throw appropriate exception is user doesn't exists
     @Transactional
     public void delete(String username) {
         if (userRepository.deleteByUsername(username) == 0){
@@ -89,7 +95,6 @@ public class UserService {
         }
     }
 
-    //  method must search user, by username, throw appropriate exception is user doesn't exists
     @Transactional
     public User search(String username) {
         User user = userRepository.findByUsername(username);
@@ -100,7 +105,6 @@ public class UserService {
         }
     }
 
-//  method must create a new access token, similar to login
     @Transactional
     public String refresh(String username) {
         try{
@@ -165,7 +169,7 @@ public class UserService {
             throw new CustomException("User with this email is already registered", HttpStatus.UNPROCESSABLE_ENTITY);
         }
         User user = userRepository.findByUsername(jwtTokenProvider.getUsername(jwtTokenProvider.resolveToken(req)));
-        String url = String.format("%s/users/activationNewEmail?email=%s", baseUrl, email);
+        String url = String.format("%s/users/activationNewEmail?id=%s&email=%s", baseUrl, user.getId(), email);
         emailService.sendMail(email, url, "Changing email");
         user.setUnconfirmedEmail(email);
         userRepository.save(user);
@@ -173,12 +177,12 @@ public class UserService {
     }
 
     @Transactional
-    public String activationNewEmail(String email){
+    public String activationNewEmail(String id, String email){
         if (userRepository.existsByEmail(email)){
             throw new CustomException("User with this email is already registered", HttpStatus.UNPROCESSABLE_ENTITY);
         }
-        User user = userRepository.findByUnconfirmedEmail(email);
-        if (user == null){
+        User user = userRepository.findById(id);
+        if (!user.getUnconfirmedEmail().equals(email)){
             throw new CustomException("Emails don't match", HttpStatus.NOT_FOUND);
         }
         user.setEmail(email);
@@ -190,10 +194,6 @@ public class UserService {
     public byte[] exportToCsv() throws IOException{
         String[] users = userRepository.findAllExceptPassword();
         List<String[]> csvData = new ArrayList<>();
-        String[] header = {"id", "username", "first_name", "last_name",
-                            "birthday", "email", "activation_key", "is_activate",
-                            "user_avatar", "registration_date", "unconfirmed_email"};
-        csvData.add(header);
         for (String user : users){
             csvData.add(user.split(","));
         }
@@ -203,7 +203,34 @@ public class UserService {
 
         InputStream in = new FileInputStream(pathToCsvFile + "/Users.csv");
         return IOUtils.toByteArray(in);
+    }
 
+    public String bulkUpload(HttpServletRequest req, MultipartFile file) throws IOException, CsvValidationException {
+        if (!file.getOriginalFilename().split("\\.(?=[^\\.]+$)")[1].equals("csv")){
+            throw new CustomException("Unsuitable file type/must be csv type", HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+        int existsUsers = 0;
+        int inviteUsers = 0;
+        File dest = new File(bulkFileUpload + "/Users.csv");
+        file.transferTo(dest);
+        try (CSVReader csvReader = new CSVReader(new FileReader(dest))){
+            String[] values;
+            EmailValidator emailValidator = new EmailValidator();
+            while ((values = csvReader.readNext()) != null){
+                for (String email : values){
+                    if (!emailValidator.isValid(email, null)){
+                        continue;
+                    }
+                    if (userRepository.existsByEmail(email)) {
+                        existsUsers++;
+                        continue;
+                    }
+                    inviteService.sendInvite(req, email);
+                    inviteUsers++;
+                }
+            }
+        }
+        return String.format("Users who were able to invite: %d; Users who were already in the system: %d", inviteUsers, existsUsers);
     }
 
 }

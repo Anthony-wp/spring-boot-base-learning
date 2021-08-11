@@ -9,7 +9,11 @@ import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.*;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.*;
@@ -34,6 +38,7 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
     private final String updateUserDataForAdminUrl = "/users/updateForAdmin";
     private final String sendInviteUrl = "/invites/sendInvite";
     private final String changeEmailUrl = "/users/changeEmail";
+    private final String bulkUploadUrl = "/users/bulkUpload";
 
     @Test
     public void simpleSignupSuccessTest() {
@@ -437,19 +442,18 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
 
         assertThat(token1).isNotBlank();
 
-//        HttpHeaders headers = new HttpHeaders();
-//        headers.put("Authorization", Collections.singletonList("Bearer " + token1));
-//
-//        ResponseEntity<String> uploadResponse = this.restTemplate.exchange(
-//                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + uploadAvatarUrl)
-//                        .queryParam("username", user.getUsername())
-//                        .build().encode().toUri(),
-//                HttpMethod.POST,
-//                new HttpEntity<>(new File("/home/softkit/IdeaProjects/images/photo.arrr.jpg").getAbsolutePath(), headers),
-//                String.class);
-//
-//        assertThat(uploadResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        headers.put("Authorization", Collections.singletonList("Bearer " + token1));
+        Resource file = new FileSystemResource("/home/softkit/IdeaProjects/images/photo.arrr.jpg");
+        MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+        map.add("file", file);
+        ResponseEntity<String> uploadResponse = this.restTemplate.exchange(
+                getBaseUrl() + uploadAvatarUrl,
+                HttpMethod.POST,
+                new HttpEntity<>(map, headers),
+                String.class);
+        assertThat(uploadResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
     @Test
     public void successUpdateUserData(){
@@ -637,6 +641,89 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
+    @Test
+    public void loadingNotCsvFile (){
+        UserDataDTO user = getValidUserForSignup();
+
+        String token = this.restTemplate.postForObject(
+                getBaseUrl() + signupUrl,
+                user,
+                String.class);
+
+        assertThat(token).isNotBlank();
+
+        String token1 = this.restTemplate.postForObject(
+                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + signinUrl)
+                        .queryParam("username", user.getUsername())
+                        .queryParam("password", user.getPassword())
+                        .build().encode().toUri(),
+                HttpEntity.EMPTY,
+                String.class);
+
+        assertThat(token1).isNotBlank();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        headers.put("Authorization", Collections.singletonList("Bearer " + token1));
+        Resource file = new FileSystemResource("/home/softkit/IdeaProjects/Users.txt");
+        MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+        map.add("file", file);
+        ResponseEntity<String> uploadResponse = this.restTemplate.exchange(
+                getBaseUrl() + bulkUploadUrl,
+                HttpMethod.POST,
+                new HttpEntity<>(map, headers),
+                String.class);
+        assertThat(uploadResponse.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+
+    @Test
+    public void inviteUserWhoIsAlreadyRegistered(){
+        UUID randomUUID = UUID.randomUUID();
+        UserDataDTO registeredUser = new UserDataDTO(
+                "test2",
+                "Anthony",
+                "Vallpon",
+                new GregorianCalendar(2001, Calendar.JANUARY, 17),
+                "toxa17012001@gmail.com",
+                randomUUID + "HeisenbuG1!",
+                true,
+                null,
+                Lists.newArrayList(Role.ROLE_ADMIN, Role.ROLE_CLIENT)
+        );
+        this.restTemplate.postForObject(
+                getBaseUrl() + signupUrl,
+                registeredUser,
+                String.class);
+
+        UserDataDTO user = getValidUserForSignup();
+        this.restTemplate.postForObject(
+                getBaseUrl() + signupUrl,
+                user,
+                String.class);
+
+        String token = this.restTemplate.postForObject(
+                UriComponentsBuilder.fromHttpUrl(getBaseUrl() + signinUrl)
+                        .queryParam("username", user.getUsername())
+                        .queryParam("password", user.getPassword())
+                        .build().encode().toUri(),
+                HttpEntity.EMPTY,
+                String.class);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        headers.put("Authorization", Collections.singletonList("Bearer " + token));
+        Resource file = new FileSystemResource("/home/softkit/IdeaProjects/spring-boot-base-learning/src/test/resources/Users.csv");
+        MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+        map.add("file", file);
+        ResponseEntity<String> uploadResponse = this.restTemplate.exchange(
+                getBaseUrl() + bulkUploadUrl,
+                HttpMethod.POST,
+                new HttpEntity<>(map, headers),
+                String.class);
+
+        assertThat(uploadResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(uploadResponse.getBody()).isEqualTo("Users who were able to invite: 2; Users who were already in the system: 1");
+    }
 
     private UserDataDTO getValidUserForSignup() {
         UUID randomUUID = UUID.randomUUID();
@@ -653,7 +740,5 @@ public class UserIntegrationControllerTests extends AbstractControllerTest {
         );
 
     }
-
-
 
 }

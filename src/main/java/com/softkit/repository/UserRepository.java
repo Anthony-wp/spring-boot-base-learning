@@ -29,6 +29,6 @@ public interface UserRepository extends JpaRepository<User, Integer> {
             nativeQuery = true)
     String[] findAllExceptPassword();
 
-    User findByUnconfirmedEmail(String email);
+    User findById(String id);
 
 }

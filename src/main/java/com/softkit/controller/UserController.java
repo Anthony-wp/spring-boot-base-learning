@@ -1,5 +1,6 @@
 package com.softkit.controller;
 
+import com.opencsv.exceptions.CsvValidationException;
 import com.softkit.dto.UserDataDTO;
 import com.softkit.dto.UserResponseDTO;
 import com.softkit.mapper.UserMapper;
@@ -7,7 +8,6 @@ import com.softkit.service.UserService;
 import io.swagger.annotations.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +18,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import javax.validation.constraints.Email;
 import java.io.IOException;
-import java.io.InputStream;
 
 @CrossOrigin
 @RestController
@@ -185,8 +184,8 @@ public class UserController {
     @ApiOperation(value = "${UserController.activationNewEmail}")
     @ApiResponses(value = {
             @ApiResponse(code = 400, message = "Something went wrong"),})
-    public String activationNewEmail(@Email String email){
-        return userService.activationNewEmail(email);
+    public String activationNewEmail(String id, @Email String email){
+        return userService.activationNewEmail(id, email);
     }
 
     @GetMapping(value = "/exportToCsv", produces = "text/csv")
@@ -198,4 +197,15 @@ public class UserController {
     public @ResponseBody byte[] exportToCsv() throws IOException {
         return userService.exportToCsv();
     }
+
+    @PostMapping(value = "/bulkUpload")
+    @ApiOperation(value = "${UserController.bulkUpload}")
+    @ApiResponses(value = {
+            @ApiResponse(code = 400, message = "Something went wrong"),
+            @ApiResponse(code = 403, message = "Access denied")})
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public String bulkUpload(HttpServletRequest req, @RequestBody MultipartFile file) throws IOException, CsvValidationException {
+        return userService.bulkUpload(req, file);
+    }
+
 }

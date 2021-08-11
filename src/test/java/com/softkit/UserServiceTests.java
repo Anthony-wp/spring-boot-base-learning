@@ -1,5 +1,6 @@
 package com.softkit;
 
+import com.opencsv.exceptions.CsvValidationException;
 import com.softkit.exception.CustomException;
 import com.softkit.model.Invite;
 import com.softkit.model.InviteStatus;
@@ -9,18 +10,28 @@ import com.softkit.security.JwtTokenProvider;
 import com.softkit.service.EmailService;
 import com.softkit.service.InviteService;
 import com.softkit.service.UserService;
+import org.apache.commons.io.IOUtils;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.stream.FileImageInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -44,6 +55,8 @@ public class UserServiceTests {
     private InviteService inviteService;
     @Autowired
     private InviteRepository inviteRepository;
+    @Value("${file.csv.path}")
+    private String pathToCsvFile;
 
 
     @Test
@@ -169,5 +182,14 @@ public class UserServiceTests {
         userService.signup(user2,"");
         assertThat(userService.exportToCsv()).isNotEmpty();
     }
+
+//    @Test
+//    public void testBulkUpload() throws CsvValidationException, IOException {
+//        User user1 = new User(1, "test1", "test", "test",
+//                new GregorianCalendar(2001, Calendar.JANUARY, 17) , "toxa17012001@gmail.com", "test", UUID.randomUUID().toString(), false, null, ZonedDateTime.now(),
+//                Lists.newArrayList(), null);
+//        userService.signup(user1,"");
+//        System.out.println(userService.bulkUpload(new File(pathToCsvFile + "/Users.csv")));
+//    }
 
 }

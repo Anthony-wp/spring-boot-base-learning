@@ -18,7 +18,5 @@ public class MvcConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/users/images/**")
                 .addResourceLocations("file://" + uploadPath + "/");
-        registry.addResourceHandler("/users/exportToCsv/**")
-                .addResourceLocations("file://" + pathToCsvFile + "/");
     }
 }
